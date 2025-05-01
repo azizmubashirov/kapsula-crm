@@ -1,0 +1,305 @@
+{% extends layout_path %}
+
+{% load static %}
+{% load i18n %}
+{% load theme %}
+
+{% block title %}User List - Pages{% endblock %}
+
+{% block vendor_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'vendor/libs/flatpickr/flatpickr.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/bootstrap-datepicker/bootstrap-datepicker.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/bootstrap-daterangepicker/bootstrap-daterangepicker.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/jquery-timepicker/jquery-timepicker.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/pickr/pickr-themes.css' %}" />
+<style>
+  .dataTables_wrapper {
+    position: relative;
+    overflow: auto;
+    border: 1px solid black;
+    white-space: nowrap;
+  }
+  .sticky-col {
+    position: -webkit-sticky;
+    position: sticky;
+    background-color: white !important;
+  }
+  .first-col {
+  width: 100px;
+  min-width: 100px;
+  max-width: 100px;
+  left: 0px;
+}
+
+.second-col {
+  width: 150px;
+  min-width: 150px;
+  max-width: 150px;
+  left: 100px;
+}
+.dropdown-menu.show {
+  transform: translate3d(170px, -1px, 0px)!important;
+}
+
+.dataTables_wrapper {
+/* scrollbar-color: #d4aa70 #e4e4e4; */
+  /* scrollbar-width: auto; */
+
+}
+
+.dataTables_wrapper::-webkit-scrollbar {
+  width: 20px;
+  height: 30px;
+}
+
+.dataTables_wrapper::-webkit-scrollbar-track {
+  background-color: #e4e4e4;
+  border-radius: 100px;
+}
+
+.dataTables_wrapper::-webkit-scrollbar-thumb {
+  border-radius: 100px;
+  border: 5px solid transparent;
+  background-clip: content-box;
+  background-color: #d4aa70;
+}
+
+</style>
+{% endblock vendor_css %}
+
+{% block vendor_js %}
+{{ block.super }}
+<script src="{% static 'vendor/libs/moment/moment.js' %}"></script>
+<script src="{% static 'vendor/libs/flatpickr/flatpickr.js' %}"></script>
+<script src="{% static 'vendor/libs/bootstrap-datepicker/bootstrap-datepicker.js' %}"></script>
+<script src="{% static 'vendor/libs/bootstrap-daterangepicker/bootstrap-daterangepicker.js' %}"></script>
+<script src="{% static 'vendor/libs/jquery-timepicker/jquery-timepicker.js' %}"></script>
+<script src="{% static 'vendor/libs/pickr/pickr.js' %}"></script>
+<script src="{% static 'js/forms-pickers.js' %}"></script>
+{% endblock vendor_js %}
+
+{% block page_js %}
+<script>
+  function filterPage() {
+    var date = $("#datepicker").val();
+
+    const urlParams = new URLSearchParams(window.location.search);
+
+    urlParams.set('date', date);
+
+    window.location.search = urlParams;
+  }
+  flatpickr("#flatpickr-range", {
+      mode: "range",
+      dateFormat: "Y-m-d",
+      onChange: function(selectedDates, dateStr, instance) {
+          var date = dateStr.split(' to ');
+          if (date.length === 2) {
+            const urlParams = new URLSearchParams(window.location.search);
+            urlParams.set('date', date);
+            window.location.search = urlParams;
+          }
+      }
+  });
+</script>
+
+<script>
+  document.getElementById("productSelect").addEventListener("change", function () {
+  const selectedValue = this.value; // Получаем выбранное значение
+  
+
+  if (selectedValue !== "0") { 
+    const targetSection = document.getElementById(`section${selectedValue}`);    
+    if (targetSection) {
+      targetSection.scrollIntoView({ behavior: "smooth" });
+    }
+  }
+});
+
+document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll("#PaidAmount-form").forEach(function (form) {
+        form.addEventListener("submit", function (event) {
+            event.preventDefault();
+            
+            let formData = new FormData(form);
+            
+            fetch("/app/edit-shipment", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === "success") {
+                    location.reload();
+                } else {
+                    alert("Ошибка: " + data.message);
+                }
+            })
+            .catch(error => console.error("Error:", error));
+        });
+    });
+});
+
+
+</script>
+<script>
+function exportToExcel() {
+    const urlParams = new URLSearchParams(window.location.search);
+    window.location.href = '/app/export-product-history?' + urlParams.toString();
+}
+</script>
+{{ block.super }}
+{% endblock page_js %}
+
+
+{% block content %}
+<div class="card">
+  <div class="row">
+
+  <div class="col-3 my-2 mx-2">
+    <input type="text" class="form-control" placeholder="YYYY-MM-DD to YYYY-MM-DD" id="flatpickr-range" value="{{date.0}} to {{date.1}}" style="width: 250px;"/>
+  </div>
+  <div class="col-4 my-2 mx-2">
+    <select class="form-select" aria-label="Default select example" id="productSelect">
+      <option selected value="0">Продукт</option>
+      {% for product in products_filters %}
+        <option value="{{product.id}}" {% if pro == product.id %}selected{% endif %}>{{product}}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-2 my-2 mx-2">
+    <h5>Всего: {% total_product_kg  date %} кг</h5>
+</div>
+<div class="col-2 my-2 mx-2">
+  <button class="btn btn-primary" onclick="exportToExcel()">Excel</button>
+</div>
+  </div>
+  <div class="card-datatable table-responsive pt-0">
+    <div id="DataTables_Table_0_wrapper" class="dataTables_wrapper dt-bootstrap5 no-footer" style="height:550px">
+      <table class=" table table-hover table-bordered" style="border: 1px solid black; color: black;">
+        <thead>
+          <tr>
+            <th class="sticky-col first-col">время</th>
+            <th class="sticky-col second-col" style="min-width: 300px;">Организация</th>
+            <th style="width: 10%;"></th>
+            {% for obj in products %}
+              <th colspan="{{obj.color.count}}" class="text-center" id="section{{obj.id}}">{{obj.name}}</th>
+              <th></th>
+            {% endfor %}
+          </tr>
+          <tr>
+            <th class="sticky-col first-col"></th>
+            <th class="sticky-col second-col"></th>
+            <th style="width: 10%;"></th>
+            {% for product in products %}
+            {% for obj in product.color.all %}
+              <th 
+              class="border-1"
+              {% if obj.code %} 
+                style="background-color: {{ obj.code }}; 
+                border: 1px solid black;
+                {% if obj.code == '#000000' %} 
+                    color: #ffff;
+                {% else %} 
+                    color: #000;
+                {% endif %}"  
+              {% endif %}
+              >{{obj.name}}</th>
+            {% endfor %}
+            <th></th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in items %}
+          <tr>
+            <td class="sticky-col first-col" style="width: 10%; font-size: small;">{{item.created_at__date|date:"d-M"}}</td>
+            <td class="sticky-col second-col" style="display: flex; align-items: center; justify-content: space-between;min-width: 300px;">
+              {{item.user}}
+
+              <div class="d-inline-block">
+                <a href="" class="btn btn-sm btn-text-secondary rounded-pill btn-icon dropdown-toggle hide-arrow"
+                  data-bs-toggle="dropdown"><i class="ti ti-dots-vertical ti-md"></i>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end m-0">
+                  <li><button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#editProduct-{{forloop.counter}}">Редактировать</button></li>
+                </ul>
+              </div>
+            </td>
+          
+            {% parce_html item date%}
+            <div class="modal fade" id="editProduct-{{forloop.counter}}" tabindex="-1" aria-hidden="true">
+              <div class="modal-dialog modal-dialog-centered1 modal-simple modal-add-new-cc">
+                <div class="modal-content p-3 p-md-5">
+                  <div class="modal-body">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <div class="text-center mb-4">
+                      <h3 class="mb-2">Редактировать Отгрузка</h3>
+                    </div>
+                    <form id="PaidAmount-form" autocomplete="off" class="row g-3" method="post" action="/app/edit-shipment">
+                      {% csrf_token %}
+                      <div class="col-12 mb-2">
+                        <label class="required form-label" for="id_client">Организация</label>
+                        <div class="input-group input-group-merge">
+                          <input type="text" name="client" value="{{item.user}}" class="form-control">
+                        </div>
+                      </div>
+                      {% edit_otgruska item %}
+                     
+                      <div class="col-12 text-center">
+                        <button type="submit" class="btn btn-primary me-sm-3 me-1">Добавить</button>
+                        <button type="reset" class="btn btn-label-secondary btn-reset" data-bs-dismiss="modal" aria-label="Close">Отмена</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan=7> No items found.</td>
+          </tr>
+          {% endfor %}
+        <tr>
+          <td class="sticky-col first-col"></td>
+          <td class="sticky-col second-col"></td>
+          {% total_quantity_changes date pro %}
+        </tr>
+        <tr>
+          <td class="sticky-col first-col"></td>
+          <td class="sticky-col second-col"></td>
+          {% total_product_quantity_changes date pro %}
+        </tr>
+        <tr>
+          <td class="sticky-col first-col"></td>
+          <td class="sticky-col second-col"></td>
+          {% total_kg_changes date pro %}
+        </tr>
+        <tr>
+          <td class="sticky-col first-col"></td>
+          <td class="sticky-col second-col"></td>
+          {% total_product_kg_changes date pro %} 
+        </tr>
+        </tbody> 
+        <thead>
+          <tr>
+            <th class="sticky-col first-col"></th>
+            <th class="sticky-col second-col" style="min-width: 300px;"></th>
+            <th style="width: 10%;"></th>
+            {% for obj in products %}
+              <th colspan="{{obj.color.count}}" class="text-center" id="section{{obj.id}}">{{obj.name}}</th>
+              <th></th>
+            {% endfor %}
+          </tr>
+
+        </thead>
+
+      </table>
+
+    </div>
+  </div>
+</div>
+
+{% endblock %}

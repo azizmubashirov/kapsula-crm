@@ -1,0 +1,169 @@
+{% extends layout_path %}
+
+{% load static %}
+{% load i18n %}
+
+{% block title %}User List - Pages{% endblock %}
+
+{% block vendor_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-bs5/datatables.bootstrap5.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-responsive-bs5/responsive.bootstrap5.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-buttons-bs5/buttons.bootstrap5.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/select2/select2.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/@form-validation/umd/styles/index.min.css' %}" />
+{% endblock vendor_css %}
+
+{% block vendor_js %}
+{{ block.super }}
+<script src="{% static 'vendor/libs/moment/moment.js' %}"></script>
+<script src="{% static 'vendor/libs/datatables-bs5/datatables-bootstrap5.js' %}"></script>
+<script src="{% static 'vendor/libs/select2/select2.js' %}"></script>
+<script src="{% static 'vendor/libs/@form-validation/umd/bundle/popular.min.js' %}"></script>
+<script src="{% static 'vendor/libs/@form-validation/umd/plugin-bootstrap5/index.min.js' %}"></script>
+<script src="{% static 'vendor/libs/@form-validation/umd/plugin-auto-focus/index.min.js' %}"></script>
+<script src="{% static 'vendor/libs/cleavejs/cleave.js' %}"></script>
+<script src="{% static 'vendor/libs/cleavejs/cleave-phone.js' %}"></script>
+{% endblock vendor_js %}
+
+{% block page_js %}
+<script>
+  function filterPage(addToPage) {
+    var entries = $("#id_list_entries option:selected").val();
+    var search = $("#id_search").val();
+    var page = parseInt($("li.page-item.active a.page-link").html()) + addToPage;
+
+    const urlParams = new URLSearchParams(window.location.search);
+
+    urlParams.set('entries', entries);
+    urlParams.set('q', search);
+    urlParams.set('page', page);
+
+    window.location.search = urlParams;
+  }
+  $("#id_list_entries").change(function () {
+    filterPage(-parseInt($("li.page-item.active a.page-link").html()) + 1);
+  });
+  $("#id_search").change(function () {
+    filterPage(-parseInt($("li.page-item.active a.page-link").html()) + 1);
+  });
+  $("a.page-link.page-number").click(function (e) {
+    e.preventDefault();
+    var page = parseInt($(this).html());
+    if (parseInt($("li.page-item.active a.page-link").html()) != page) {
+      filterPage(page - parseInt($("li.page-item.active a.page-link").html()));
+    }
+  });
+  $("a.page-link.with-next-row").click(function (e) {
+    e.preventDefault();
+    filterPage(1);
+  });
+  $("a.page-link.with-prev-row").click(function (e) {
+    e.preventDefault();
+    filterPage(-1);
+  });
+</script>
+{{ block.super }}
+<!-- <script src="{% static 'js/app-user-list.js' %}"></script> -->
+{% endblock page_js %}
+
+
+{% block content %}
+<!-- clients List Table -->
+<div class="card">
+  <div class="card-datatable table-responsive pt-0">
+    <div id="DataTables_Table_0_wrapper" class="dataTables_wrapper dt-bootstrap5 no-footer">
+      
+      <hr class="my-0">
+      <div class="row">
+        <div class="col-sm-12 col-md-6">
+          <div class="dataTables_length" id="id_list_entries"><label> <select
+            name="DataTables_Table_0_length" aria-controls="DataTables_Table_0" class="form-select">
+            {% for entry in entries_list %}
+              <option value="{{ entry }}" {% if entries == entry %}selected{% endif %}>{{ entry }}</option>
+            {% endfor %}
+          </select> </label></div>
+        </div>
+        <div class="col-sm-12 col-md-6 d-flex justify-content-center justify-content-md-end mt-n6 mt-md-0">
+          <div id="DataTables_Table_0_filter" class="dataTables_filter">
+            <label>Search:
+              <input type="search" class="form-control" placeholder="" id="id_search"
+                value="{{ search_query }}"></label>
+          </div>
+        </div>
+      </div>
+      <table class="datatables-basic table dataTable no-footer dtr-column" id="DataTables_Table_0"
+        aria-describedby="DataTables_Table_0_info">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Название</th>
+            <th>Пользователь</th>
+            <th>кол-во</th>
+            <th>Тип</th>
+            <th>День</th>
+          </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+              <td>{{item.id }}</td>
+              <td>{{item.meterial.name}}</td>
+              <td>{{item.user}}</td>
+              <td>{{item.quantity_changed}}</td>
+              <td>{{item.get_change_type_display}}</td>
+              <td>{{item.created_at|date:"Y-m-d H:i:s"}}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan=7> No items found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+      </table>
+      <div class="row">
+        <div class="col-sm-12 col-md-6">
+          <div class="dataTables_info" id="DataTables_Table_0_info" role="status" aria-live="polite">Показано
+           {{ items.start_index }}-{{ items.end_index }} из {{ items.paginator.count }} записей</div>
+        </div>
+        <div class="col-sm-12 col-md-6">
+          <div class="dataTables_paginate paging_simple_numbers" id="DataTables_Table_0_paginate">
+            <ul class="pagination" id="id_pagination" >
+              <li class="paginate_button page-item previous {% if not items.has_previous %}disabled{% endif %}" id="DataTables_Table_0_previous">
+                <a class="page-link with-prev-row" href="" data-action="{% if items.has_previous %}?page={{ items.previous_page_number }}{% endif %}">
+                  <i class="ti ti-chevron-left ti-sm"></i>
+                </a>
+              </li>
+              {% for i in items.paginator.page_range %}
+                {% if items.number == i %}
+                  <li class="page-item active">
+                    <a class="page-link page-number" href="" data-action="{{ i }}">{{ i }}</a>
+                  </li>
+                {% elif items.number == values.paginator.num_pages and values.number|add:"-2" == i%}
+                  <li class="page-item">
+                    <a class="page-link page-number" href="" data-action="{{ i }}">{{ i }}</a>
+                  </li>
+                {% elif items.number == 1 and items.number|add:"2" == i %}
+                  <li class="page-item">
+                    <a class="page-link page-number" href="" data-action="{{ i }}">{{ i }}</a>
+                  </li>
+                {% elif items.number|add:"1" == i or items.number|add:"-1" == i %}
+                  <li class="page-item">
+                    <a class="page-link page-number" href="" data-action="{{ i }}">{{ i }}</a>
+                  </li>
+                {% endif %}
+              {% endfor %}
+              <li class="page-item {% if not items.has_next %}disabled{% endif %}">
+                <a class="page-link with-next-row" href="" data-action="{% if items.has_next %}?page={{ items.next_page_number }}{% endif %}">
+                  <i class="ti ti-chevron-right ti-sm"></i>
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,151 @@
+{% extends layout_path %}
+
+{% load static %}
+{% load i18n %}
+
+{% block title %}eCommerce Add Product - Apps{% endblock %}
+
+{% block vendor_css %}
+{{ block.super }}
+
+<link rel="stylesheet" href="{% static 'vendor/libs/select2/select2.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/dropzone/dropzone.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/flatpickr/flatpickr.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/tagify/tagify.css' %}" />
+{% endblock vendor_css %}
+
+{% block vendor_js %}
+{{ block.super }}
+
+<script src="{% static 'vendor/libs/select2/select2.js' %}"></script>
+<script src="{% static 'vendor/libs/dropzone/dropzone.js' %}"></script>
+<script src="{% static 'vendor/libs/jquery-repeater/jquery-repeater.js' %}"></script>
+<script src="{% static 'vendor/libs/flatpickr/flatpickr.js' %}"></script>
+<script src="{% static 'vendor/libs/tagify/tagify.js' %}"></script>
+{% endblock vendor_js %}
+
+{% block page_js %}
+{{ block.super }}
+<script src="{% static 'js/app-ecommerce-product-add.js' %}"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Input elementlarini tanlab olish
+    const meshInput = document.getElementById("id_mesh");
+    const priceInput = document.getElementById("id_count");
+    const resultDisplay = document.getElementById("result_count");
+
+    // Funksiya: qiymatlarni olib, ko'paytirish va natijani ko'rsatish
+    function calculateProduct() {
+        const meshValue = parseFloat(meshInput.value) || 0; // "0" agar qiymat bo'sh bo'lsa
+        const priceValue = parseFloat(priceInput.value) || 0;
+        const product = meshValue * priceValue;
+
+        resultDisplay.textContent = product.toLocaleString('en-US', { maximumFractionDigits: 0 });
+    }
+
+    // Input elementlarida hodisalar qo'shish
+    meshInput.addEventListener("input", calculateProduct);
+    priceInput.addEventListener("input", calculateProduct);
+});
+document.addEventListener("DOMContentLoaded", function () {
+    // Input elementlarini tanlab olish
+    const meshInput = document.getElementById("id_mesh");
+    const countInput = document.getElementById("id_count");
+    const priceInput = document.getElementById("id_price");
+    const resultDisplay = document.getElementById("result");
+
+    function calculateProduct() {
+        const meshValue = parseFloat(meshInput.value) || 0; // "0" agar qiymat bo'sh bo'lsa
+        const priceValue = parseFloat(priceInput.value) || 0;
+        const countValue = parseFloat(countInput.value) || 0;
+        const product = meshValue * countValue * priceValue;
+
+        resultDisplay.textContent = product.toFixed(2);
+    }
+
+    // Input elementlarida hodisalar qo'shish
+    meshInput.addEventListener("input", calculateProduct);
+    priceInput.addEventListener("input", calculateProduct);
+    countInput.addEventListener("input", calculateProduct);
+});
+</script>
+{% endblock page_js %}
+
+{% block content %}
+
+<h4 class="py-3 mb-0">
+  Создать заказ
+</h4>
+
+<div class="app-ecommerce">
+  <div class="row">
+    <!-- First column-->
+    <div class="col-12 col-lg-12">
+      <!-- Product Information -->
+      <div class="card mb-4">
+        <div class="card-body">
+          <form method="post" autocomplete="off">
+            {% csrf_token %}
+          <div class="mb-3">
+            {{form.client.errors}}
+            <label class="required form-label" for="{{ form.client.id_for_label }}">{{ form.client.label }}</label>
+            {{ form.client }}
+          </div>
+          <div class="mb-3">
+            {{form.product.errors}}
+            <label class="required form-label" for="{{ form.product.id_for_label }}">{{ form.product.label }}</label>
+            {{ form.product }}
+          </div>
+          
+          <div class="row mb-3">
+            <div class="col">
+              {{form.mesh.errors}}
+              <label class="required form-label" for="{{ form.mesh.id_for_label }}">{{ form.mesh.label }}</label>
+              {{ form.mesh }}
+            </div>
+            <div class="col-6">
+              {{form.count.errors}}
+              <label class="required form-label" for="{{ form.count.id_for_label }}">{{ form.count.label }}</label>
+              {{ form.count }}
+            </div>
+          </div>
+          <div class="row mb-3">
+            <div class="col">
+              {{form.price.errors}}
+              <label class="required form-label" for="{{ form.price.id_for_label }}">{{ form.price.label }}</label>
+              {{ form.price }}
+            </div>
+            <div class="col">
+              {{form.paid_price.errors}}
+              <label class="required form-label" for="{{ form.paid_price.id_for_label }}">{{ form.paid_price.label }}</label>
+              {{ form.paid_price }}
+            </div>
+          </div>
+          <div class="row mt-3">
+            
+            <div class="col">
+                <label class="form-label">Приход:</label>
+                <p id="result_count">0</p>
+            </div>
+            <div class="col">
+                <label class="form-label">Сумма:</label>
+                <p id="result">0</p>
+            </div>
+            
+        </div>
+          <div class="pt-4">
+            <button type="submit" class="btn btn-primary me-sm-3 me-1">Добавить</button>
+            <a href="/app/order/list/" class="btn btn-label-secondary">Отмена</a>
+          </div>
+        </form>
+        </div>
+      </div>
+      
+    </div>
+    <!-- /Second column -->
+
+  
+  </div>
+</div>
+
+{% endblock %}

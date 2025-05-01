@@ -1,0 +1,80 @@
+{% extends layout_path %}
+
+{% load static %}
+{% load i18n %}
+
+{% block title %}Sticky Actions - Forms{% endblock %}
+
+{% block vendor_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'vendor/libs/select2/select2.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/bootstrap-select/bootstrap-select.css' %}" />
+{% endblock vendor_css %}
+
+{% block vendor_js %}
+{{ block.super }}
+<script src="{% static 'vendor/libs/select2/select2.js' %}"></script>
+<script src="{% static 'vendor/libs/bootstrap-select/bootstrap-select.js' %}"></script>
+{% endblock vendor_js %}
+
+{% block page_js %}
+{{ block.super }}
+<script src="{% static 'js/form-layouts.js' %}"></script>
+<script src="{% static 'js/forms-selects.js' %}"></script>
+{% endblock page_js %}
+
+{% block content %}
+
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      
+      <div class="tab-content">
+        <div class="tab-pane fade active show" id="form-tabs-personal" role="tabpanel">
+          <form method="post" autocomplete="off">
+            {% csrf_token %}
+            <div class="row g-3">
+              <div class="row col-md-12 mb-3">
+                <div class="col-md-6">
+                  {{form.name.errors}}
+                  <label class="required form-label" for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+                  {{ form.name }}
+                </div>
+                {% if type == 'color' %}
+                <div class="col-md-3" id="id_district_field">
+                  
+                  <label class="required form-label" for="id_code" style="margin-bottom: 10px;">Цветовой код</label>
+                  <input type="color" class="form-control" style="padding: 5px;" name="code" id="id_code" value="{{form.code.value}}">
+                </div>
+                {% endif %}
+                <div class="col-md-6">
+                  {{form.is_active.errors}}
+                  <label class="required form-label" for="{{ form.is_active.id_for_label }}">{{ form.is_active.label }}</label>
+                  {{ form.is_active }}
+                </div>
+              </div>
+              
+
+              <div class="row col-md-6 mb-3">
+                <div class="col-md-12 mb-3">
+                  {{form.color.errors}}
+                  <label class="required form-label" for="{{ form.color.id_for_label }}">{{ form.color.label }}</label>
+                  {{ form.color }}
+                </div>
+                
+
+              </div>
+              
+            </div>
+            <div class="pt-4">
+              <button type="submit" class="btn btn-primary me-sm-3 me-1">Добавить</button>
+              <a href="/app/product/list/" class="btn btn-label-secondary">Отмена</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- /Sticky Actions -->
+{% endblock %}

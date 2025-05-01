@@ -1,0 +1,232 @@
+{% extends layout_path %}
+
+{% load static %}
+{% load i18n %}
+
+{% block title %}User List - Pages{% endblock %}
+
+{% block vendor_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'vendor/libs/select2/select2.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/bootstrap-select/bootstrap-select.css' %}" />
+<style>
+    .jstree-container-ul {
+        column-count: 2;
+    }
+    .card-body ul {
+      list-style: none;
+    }
+</style>
+{% endblock vendor_css %}
+
+{% block vendor_js %}
+{{ block.super }}
+<script src="{% static 'vendor/libs/select2/select2.js' %}"></script>
+<script src="{% static 'vendor/libs/bootstrap-select/bootstrap-select.js' %}"></script>
+{% endblock vendor_js %}
+
+{% block page_js %}
+{{ block.super }}
+<script src="{% static 'js/form-layouts.js' %}"></script>
+<script src="{% static 'js/forms-selects.js' %}"></script>
+<script>
+    $("#id_region").change(function(e){
+    var region_id = $("#id_region option:selected" ).val()
+    const districtSelect = document.getElementById('id_district');
+    $.ajax({
+            type: 'GET',
+            url: `/app/user/create/?region_id=${region_id}`,
+            success: function (response) {
+                console.log(response);
+                
+                $("#id_district_field").html(response);
+            },
+        })
+  })
+</script>
+<script>
+  function filterPage(){
+        var product = $("#Product option:selected").val();
+        var region = $("#Region option:selected").val();
+        var district = $("#District option:selected").val();
+        var search = $("#id_search").val();
+
+        const urlParams = new URLSearchParams(window.location.search);
+
+        urlParams.set('q', search);
+        urlParams.set('product', product);
+        urlParams.set('region', region);
+        urlParams.set('district', district);
+
+        window.location.search = urlParams;
+    }
+    $("#id_list_entries, #Product, #Region, #District").change(function(){
+        filterPage();
+    });
+    $("#id_search").change(function(){
+        filterPage(-parseInt($("li.page-item.active a.page-link").html()) + 1);
+    });
+</script>
+{% endblock page_js %}
+
+
+{% block content %}
+
+<div class="row">
+    <!-- Basic -->
+    <div class="col-md-12 col-12">
+      {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
+                </button>
+            </div>
+        {% endfor %}
+      {% endif %}
+      <div class="card mb-4">
+        <div class="row">
+            <div class="col-4">
+                <h5 class="card-header">Клиент</h5>
+            </div>
+            <div class="col-6" >
+              <div class="dt-action-buttons text-end pt-md-3 me-md-4">
+                <button class="btn btn-secondary buttons-collection  btn-label-primary me-4  border-none" data-bs-toggle="modal" data-bs-target="#AddPaymentClient">
+                  <i class="fa-solid fa-upload me-sm-1"></i>
+                  <span class="d-none d-sm-inline-block">Импорт</span>
+              </button>
+              </div>
+          </div>
+            <div class="col-2">
+                <div class="dt-action-buttons text-end pt-md-3 me-md-4">
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addNewCCModal">
+                        <i class="ti ti-plus me-sm-1"></i>
+                         Добавить </button>
+                </div>
+            </div>
+        </div>
+        <div class="row ms-2 me-1">
+            <div class="col-3 pt-md-3" id="Region">
+              <select class="form-select text-capitalize">
+                <option value="0">Область</option>
+                {% for region in regions %}
+                <option value="{{region.id}}" {% if reg == region.id %}selected{% endif %}>{{region.name_uz}}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-3 pt-md-3" id="District" >
+              <select class="form-select text-capitalize">
+                <option value="0">{% if dis_name %}{{dis_name}}{%else %}Туман {%endif %}</option>
+                {% for district in districts %}
+                <option value="{{district.id}}" {% if dis == district.id %}selected{% endif %}>{{district.name_uz}}</option>
+                {% endfor %}
+              </select>
+          </div>
+            <div class="col-3 pt-md-3" id="Product">
+              <select class="form-select text-capitalize">
+                <option value="0">Продукт</option>
+                {% for item in products %}
+                <option value="{{item.id}}" {% if product == item.id %}selected{% endif %}>{{item.name}}</option>
+                {% endfor %}
+              </select>
+          </div>
+            
+            <div class="col-3 pt-md-3">
+                <div class="dataTables_length" id="id_list_entries">
+                    <input type="search" class="form-control" placeholder="Поиск" id="id_search" value="{{ search_query }}"></label>
+                  </div>
+              </div>
+              
+        </div>
+        <div class="card-body fa-4xl">
+            <ul style="column-count: 3;" data-mdb-ripple-color="light">
+            {% for item in items %}
+              <li><a class="text-dark" href="/app/order/list/?client={{item.id}}&year={{current_year}}"><i class="ti ti-folder fa-2xl m-3 text-info"></i><b>{{item.name}}</b></a> </li>
+            {% endfor %}
+            </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="addNewCCModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered1 modal-simple modal-add-new-cc">
+      <div class="modal-content p-3 p-md-5">
+        <div class="modal-body">
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          <div class="text-center mb-4">
+            <h3 class="mb-2">Добавить сырье</h3>
+          </div>
+          <form id="addNewCCForm" class="row g-3" method="post" autocomplete="off">
+            {% csrf_token %}
+            <div class="col-12">
+              <label class="required form-label" for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+              <div class="input-group input-group-merge">
+                {{form.name}}
+              </div>
+            </div>
+            <div class="col-6">
+              <label class="required form-label" for="{{ form.region.id_for_label }}">{{ form.region.label }}</label>
+              <div class="input-group input-group-merge">
+                {{form.region}}
+              </div>
+            </div>
+            <div class="col-6" id="id_district_field">
+              <label class="required form-label" for="{{ form.district.id_for_label }}">{{ form.district.label }}</label>
+              <div class="input-group input-group-merge">
+                {{form.district}}
+              </div>
+            </div>
+            <div class="col-6">
+              <label class="required form-label" for="{{ form.phone_number.id_for_label }}">{{ form.phone_number.label }}</label>
+              <div class="input-group input-group-merge">
+                {{form.phone_number}}
+              </div>
+            </div>
+            <div class="col-6">
+              <label class="required form-label" for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}</label>
+              <div class="input-group input-group-merge">
+                {{form.first_name}}
+              </div>
+            </div>
+            <div class="col-12">
+              <label class="required form-label" for="{{ form.phone_number.id_for_label }}">{{ form.product.label }}</label>
+              <div class="select2-primary">
+                {{form.product}}
+              </div>
+            </div>
+            
+            <div class="col-12 text-center">
+              <button type="submit" class="btn btn-primary me-sm-3 me-1">Добавить</button>
+              <button type="reset" class="btn btn-label-secondary btn-reset" data-bs-dismiss="modal" aria-label="Close">Отмена</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal fade" id="AddPaymentClient" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered1 modal-simple modal-add-new-cc">
+      <div class="modal-content p-3 p-md-5">
+        <div class="modal-body">
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          <div class="text-center mb-4">
+            <h3 class="mb-2">импорт клиента</h3>
+          </div>
+          <form id="form" class="row g-3" method="post" action="/app/import-order/clients" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <div class="mb-3">
+              <label for="formFile" class="form-label">excel</label>
+              <input class="form-control" type="file" id="formFile" name="myfile">
+            </div>
+            <div class="col-12 text-center">
+              <button type="submit" class="btn btn-primary me-sm-3 me-1">Добавить</button>
+              <button type="reset" class="btn btn-label-secondary btn-reset" data-bs-dismiss="modal" aria-label="Close">Отмена</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,328 @@
+{% extends layout_path %}
+
+{% load static %}
+{% load i18n %}
+
+{% block title %}User List - Pages{% endblock %}
+
+{% block vendor_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-bs5/datatables.bootstrap5.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-responsive-bs5/responsive.bootstrap5.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-buttons-bs5/buttons.bootstrap5.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/dropzone/dropzone.css' %}" />
+{% endblock vendor_css %}
+
+{% block vendor_js %}
+{{ block.super }}
+<script src="{% static 'vendor/libs/datatables-bs5/datatables-bootstrap5.js' %}"></script>
+<script src="{% static 'vendor/libs/dropzone/dropzone.js' %}"></script>
+
+<script src="{% static 'js/forms-file-upload.js' %}"></script>
+{% endblock vendor_js %}
+
+{% block page_js %}
+<script>
+  function filterPage(addToPage){
+        var entries = $("#id_list_entries option:selected").val();
+        var region = $("#Region option:selected").val();
+        var district = $("#District option:selected").val();
+        var category = $("#Category option:selected").val();
+        var product = $("#Product option:selected").val();
+        var search = $("#id_search").val();
+        var page = parseInt($("li.page-item.active a.page-link").html()) + addToPage;
+
+        const urlParams = new URLSearchParams(window.location.search);
+
+        urlParams.set('entries', entries);
+        urlParams.set('q', search);
+        urlParams.set('page', page);
+        urlParams.set('region', region);
+        urlParams.set('district', district);
+        urlParams.set('product', product);
+        urlParams.set('category', category);
+
+        window.location.search = urlParams;
+    }
+    $("#id_list_entries, #Region, #District, #Category, #Product").change(function(){
+        filterPage(-parseInt($("li.page-item.active a.page-link").html()) + 1);
+    });
+    $("#id_search").change(function(){
+        filterPage(-parseInt($("li.page-item.active a.page-link").html()) + 1);
+    });
+    $("a.page-link.page-number").click(function(e){
+        e.preventDefault();
+        var page = parseInt($(this).html());
+        if (parseInt($("li.page-item.active a.page-link").html()) != page){
+            filterPage(page - parseInt($("li.page-item.active a.page-link").html()));
+        }
+    });
+    $("a.page-link.with-next-row").click(function(e){
+        e.preventDefault();
+        filterPage(1);
+    });
+    $("a.page-link.with-prev-row").click(function(e){
+        e.preventDefault();
+        filterPage(-1);
+    });
+
+      document.getElementById("productSelect").addEventListener("change", function () {
+      const selectedValue = this.value;
+      
+
+      if (selectedValue !== "0") { 
+        const targetSection = document.getElementById(`section${selectedValue}`);    
+        if (targetSection) {
+          targetSection.scrollIntoView({ behavior: "smooth" });
+        }
+      }
+    });
+
+</script>
+
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+      document.querySelectorAll(".delete-record").forEach(button => {
+          button.addEventListener("click", function (event) {
+              event.preventDefault();
+  
+              let userId = this.getAttribute("data-user-id"); // Foydalanuvchi ID sini olish
+  
+             
+  
+              fetch(`/app/user/${userId}/delete/`, {
+                  method: "GET",
+              })
+              .then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      let row = button.closest("tr");
+                      if (row) {
+                          row.remove();
+                      }
+                  } else {
+                      alert("Xatolik yuz berdi: " + data.message);
+                  }
+              })
+              .catch(error => {
+                  console.error("Xatolik:", error);
+                  alert("O‘chirishda xatolik yuz berdi!", error);
+              });
+          });
+      });
+  });
+  
+  </script>
+
+
+{{ block.super }}
+<!-- <script src="{% static 'js/app-user-list.js' %}"></script> -->
+{% endblock page_js %}
+
+
+{% block content %}
+<!-- clients List Table -->
+<div class="card">
+  <div class="card-datatable table-responsive pt-0">
+    <div id="DataTables_Table_0_wrapper" class="dataTables_wrapper dt-bootstrap5 no-footer">
+      <div class="card-header flex-column flex-md-row">
+        <div class="col-2 product_status" id="Region">
+          <select class="form-select text-capitalize">
+            <option value="0">Область</option>
+            {% for region in regions %}
+            <option value="{{region.id}}" {% if reg == region.id %}selected{% endif %}>{{region.name_uz}}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-2 product_status" id="District" >
+          <select class="form-select text-capitalize">
+            <option value="0">{% if dis_name %}{{dis_name}}{%else %}Туман {%endif %}</option>
+            {% for district in districts %}
+            <option value="{{district.id}}" {% if dis == district.id %}selected{% endif %}>{{district.name_uz}}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-2 product_status" id="Category" >
+          <select class="form-select text-capitalize">
+            <option value="0">Категория</option>
+            {% for category in categories %}
+            <option value="{{category.id}}" {% if cat == category.id %}selected{% endif %}>{{category.name}}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-2 product_status" id="Product" >
+          <select class="form-select text-capitalize">
+            <option value="0">Продукт</option>
+            {% for product in products %}
+            <option value="{{product.id}}" {% if pro == product.id %}selected{% endif %}>{{product.name}}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-1 mx-2 product_status text-end">
+            <div class="dt-buttons btn-group flex-wrap">
+              <a href="/app/user/export/data"
+                class="btn btn-secondary buttons-collection  btn-label-primary me-4  border-none">
+                <i class="fa-solid fa-download me-sm-1"></i>
+                <span class="d-none d-sm-inline-block">Excel</span>
+            </a>
+            </div>
+        </div>
+        <div class="col-1" style="margin-right: 2rem; margin-left: 1rem;" >
+            <div class="dt-buttons btn-group flex-wrap">
+              <button class="btn btn-secondary buttons-collection  btn-label-primary me-4  border-none" data-bs-toggle="modal" data-bs-target="#AddPaymentClient">
+                <i class="fa-solid fa-upload me-sm-1"></i>
+                <span class="d-none d-sm-inline-block">Импорт</span>
+            </button>
+            </div>
+        </div>
+        <div class="col-2 product_status">
+          <div class="dt-buttons btn-group flex-wrap">
+              <a href="/app/user/create/" class="btn btn-secondary create-new btn-primary waves-effect waves-light">
+                <i class="ti ti-plus me-sm-1"></i>
+                <span class="d-none d-sm-inline-block">Добавить</span>
+              </a>
+          </div>
+        </div>
+      </div>
+      <hr class="my-0">
+      <div class="row">
+        <div class="col-sm-12 col-md-6">
+          <div class="dataTables_length" id="id_list_entries"><label>Показывать <select
+                name="DataTables_Table_0_length" aria-controls="DataTables_Table_0" class="form-select">
+                {% for entry in entries_list %}
+                  <option value="{{ entry }}" {% if entries == entry %}selected{% endif %}>{{ entry }}</option>
+                {% endfor %}
+              </select> </label></div>
+        </div>
+        <div class="col-sm-12 col-md-6 d-flex justify-content-center justify-content-md-end mt-n6 mt-md-0">
+          <div id="DataTables_Table_0_filter" class="dataTables_filter">
+            <label>Поиск:
+              <input type="search" class="form-control" placeholder="" id="id_search" value="{{ search_query }}"></label>
+          </div>
+        </div>
+      </div>
+      <table class="datatables-basic table dataTable no-footer dtr-column" id="DataTables_Table_0" aria-describedby="DataTables_Table_0_info" >
+        <thead>
+          <tr>
+          <th></th>
+          <th>Компания</th>
+          <th>Область</th>
+          <th>Туман</th>
+          <th>Продукт</th>
+          <th style="width: 10%;">День</th>
+          <th>Категория</th>
+          <th>Действия</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for client in clients %}
+          <tr>
+            <td class="dt-select"><input aria-label="Select row" class="form-check-input" type="checkbox"></td>
+            <td id="section{{client.id}}">
+              <div class="d-flex justify-content-start align-items-center user-name">
+                <div class="avatar-wrapper">
+                  <div class="avatar me-2"><a href="/app/user/{{client.id}}/view/account/"><span class="avatar-initial rounded-circle bg-label-info">{{client.name.0}}</span></a></div>
+                </div>
+                <div class="d-flex flex-column"><span class="emp_name text-truncate">{{client.name}}</span>
+                  {% for contact in client.client_contacts.all %}
+                  <small class="emp_post text-truncate text-muted">{{contact.name}} {{contact.phone_number}}</small>
+                  {% endfor %}
+                </div>
+              </div>
+            </td>
+            <td>{{client.region.name_uz}}</td>
+            <td>{{ client.district.name_uz}}</td>
+            <td>
+              {% for product in client.product.all %}
+                <small class="emp_post text-truncate text-muted">{{ product.name }}</small>
+              {% endfor %}
+            </td>
+            <td>{{client.created_at|date:"Y/m/d"}}</td>
+            <td>
+              {% for category in client.category.all %}
+                <small class="emp_post text-truncate text-muted">{{ category }}</small> <br>
+              {% endfor %}
+            </td>
+            <td>
+              <div class="d-inline-block">
+                <a href="" class="btn btn-sm btn-text-secondary rounded-pill btn-icon dropdown-toggle hide-arrow"
+                  data-bs-toggle="dropdown"><i class="ti ti-dots-vertical ti-md"></i>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end m-0">
+                  <li><a href="/app/user/{{client.id}}/view/account/" class="dropdown-item">Просмотры</a></li>
+                  <div class="dropdown-divider"></div>
+                  <li><a href="#" class="dropdown-item text-danger delete-record" data-user-id="{{ client.id }}">Удалить</a></li>
+                </ul>
+              </div><a href="/app/user/{{client.id}}/edit/?page={{clients.number}}" class="btn btn-sm btn-text-secondary rounded-pill btn-icon item-edit"><i
+                  class="ti ti-pencil ti-md"></i></a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan=7> No clients found.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <div class="row">
+        <div class="col-sm-12 col-md-6">
+          <div class="dataTables_info" id="DataTables_Table_0_info" role="status" aria-live="polite">Показано
+           {{ clients.start_index }}-{{ clients.end_index }} из {{ clients.paginator.count }} записей</div>
+        </div>
+        <div class="col-sm-12 col-md-6">
+          <div class="dataTables_paginate paging_simple_numbers" id="DataTables_Table_0_paginate">
+            <ul class="pagination" id="id_pagination" >
+              <li class="paginate_button page-item previous {% if not clients.has_previous %}disabled{% endif %}" id="DataTables_Table_0_previous">
+                <a class="page-link with-prev-row" href="" data-action="{% if clients.has_previous %}?page={{ clients.previous_page_number }}{% endif %}">
+                  <i class="ti ti-chevron-left ti-sm"></i>
+                </a>
+              </li>
+              {% for i in clients.paginator.page_range %}
+              {% if i == clients.number %}
+                  <li class="page-item active">
+                      <a class="page-link page-number" href="" data-action="{{ i }}">{{ i }}</a>
+                  </li>
+              {% elif i >= clients.number|add:"-5" and i <= clients.number|add:"5" %}
+                  <li class="page-item">
+                      <a class="page-link page-number" href="" data-action="{{ i }}">{{ i }}</a>
+                  </li>
+              {% endif %}
+              {% endfor %}
+              <li class="page-item {% if not clients.has_next %}disabled{% endif %}">
+                <a class="page-link with-next-row" href="" data-action="{% if clients.has_next %}?page={{ clients.next_page_number }}{% endif %}">
+                  <i class="ti ti-chevron-right ti-sm"></i>
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="AddPaymentClient" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered1 modal-simple modal-add-new-cc">
+    <div class="modal-content p-3 p-md-5">
+      <div class="modal-body">
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="text-center mb-4">
+          <h3 class="mb-2">импорт клиента</h3>
+        </div>
+        <form id="form" class="row g-3" method="post" action="/app/import/clients" enctype="multipart/form-data" autocomplete="off">
+          {% csrf_token %}
+          
+          <div class="mb-3">
+            <label for="formFile" class="form-label">excel</label>
+            <input class="form-control" type="file" id="formFile" name="myfile">
+          </div>
+          <div class="col-12 text-center">
+            <button type="submit" class="btn btn-primary me-sm-3 me-1">Добавить</button>
+            <button type="reset" class="btn btn-label-secondary btn-reset" data-bs-dismiss="modal" aria-label="Close">Отмена</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

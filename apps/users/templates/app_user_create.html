@@ -1,0 +1,160 @@
+{% extends layout_path %}
+
+{% load static %}
+{% load i18n %}
+
+{% block title %}Sticky Actions - Forms{% endblock %}
+
+{% block vendor_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'vendor/libs/select2/select2.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/tagify/tagify.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/bootstrap-select/bootstrap-select.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/typeahead-js/typeahead.css' %}" />
+{% endblock vendor_css %}
+
+{% block vendor_js %}
+{{ block.super }}
+<script src="{% static 'vendor/libs/select2/select2.js' %}"></script>
+<script src="{% static 'vendor/libs/tagify/tagify.js' %}"></script>
+<script src="{% static 'vendor/libs/bootstrap-select/bootstrap-select.js' %}"></script>
+<script src="{% static 'vendor/libs/typeahead-js/typeahead.js' %}"></script>
+<script src="{% static 'vendor/libs/bloodhound/bloodhound.js' %}"></script>
+{% endblock vendor_js %}
+
+{% block page_js %}
+{{ block.super }}
+<script src="{% static 'js/forms-selects.js' %}"></script>
+<script src="{% static 'js/forms-tagify.js' %}"></script>
+<script src="{% static 'js/forms-typeahead.js' %}"></script>
+<script>
+  $("#id_region").change(function(e){
+    var region_id = $("#id_region option:selected" ).val()
+    const districtSelect = document.getElementById('id_district');
+    // fetch()
+    // .then(response => response.json())
+    // .then(data => {
+    //     data.districts.forEach(district => {
+    //         const option = document.createElement('option');
+    //         option.value = district.id;
+    //         option.textContent = district.name;
+    //         districtSelect.appendChild(option);
+    //     });
+    // })
+    // .catch(error => console.error('Error:', error));
+
+
+
+    $.ajax({
+            type: 'GET',
+            url: `/app/user/create/?region_id=${region_id}`,
+            success: function (response) {
+                console.log(response);
+                
+                $("#id_district_field").html(response);
+            },
+        })
+  })
+</script>
+{% endblock page_js %}
+
+{% block content %}
+
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      
+      <div class="tab-content">
+        <div class="tab-pane fade active show" id="form-tabs-personal" role="tabpanel">
+          <form method="post" autocomplete="off">
+            {% csrf_token %}
+            <div class="row g-3">
+              <div class="row col-md-12 mb-3">
+                <div class="col-md-6">
+                  {{form.name.errors}}
+                  <label class="required form-label" for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+                  {{ form.name }}
+                </div>
+                <div class="col-md-6">
+                  {{form.region.errors}}
+                  <label class="required form-label" for="{{ form.region.id_for_label }}">{{ form.region.label }}</label>
+                  {{ form.region }}
+                </div>
+              </div>
+              
+              
+
+              <div class="row col-md-6 mb-3">
+                <div class="col-md-12" id="id_district_field">
+                  {{form.district.errors}}
+                  <label class="required form-label" for="{{ form.district.id_for_label }}">{{ form.district.label }}</label>
+                  {{ form.district }}
+                </div>
+                <div class="col-md-12 select2-primary">
+                  {{form.product.errors}}
+                  <label class="required form-label" for="{{ form.product.id_for_label }}">{{ form.product.label }}</label>
+                  {{ form.product }}
+                  <!-- {{ form.other_product }} -->
+                </div>
+              </div>
+              
+              <div class="row col-md-6 mb-3">
+                <div class="col-md-12 mb-3">
+                  {{form.category.errors}}
+                  <label class="required form-label" for="{{ form.category.id_for_label }}">{{ form.category.label }}</label>
+                  {{ form.category }}
+                </div>
+                <div class="col-md-12">
+                  {{form.comment.errors}}
+                  <label class="required form-label" for="{{ form.comment.id_for_label }}">{{ form.comment.label }}</label>
+                  {{ form.comment }}
+                </div>
+              </div>
+
+              
+              
+
+              <h6>Контакт</h6>
+
+              {{ contact_formset.management_form }}
+              {% for form in contact_formset %}
+                <div class="col-md-4">
+                  {% for error in form.errors.values %}
+                    <div class="text-danger">{{ error|join:", " }}</div>
+                  {% endfor %}
+                  <label class="required form-label" for="{{ form.phone_number.id_for_label }}">{{ form.phone_number.label }}</label>
+                  {{ form.phone_number }}
+                </div>
+                <div class="col-md-4">
+                  {% for error in form.errors.values %}
+                    <div class="text-danger">{{ error|join:", " }}</div>
+                  {% endfor %}
+                  <label class="required form-label" for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+                  {{ form.name }}
+                </div>
+                <div class="col-md-4">
+                  {% for error in form.errors.values %}
+                    <div class="text-danger">{{ error|join:", " }}</div>
+                  {% endfor %}
+                  <label class="required form-label" for="{{ form.position.id_for_label }}">{{ form.position.label }}</label>
+                  {{ form.position }}
+                </div>
+              {% endfor %}
+             
+
+              
+              
+              
+            </div>
+            <div class="pt-4">
+              <button type="submit" class="btn btn-primary me-sm-3 me-1">Добавить</button>
+              <a href="/app/user/list/" class="btn btn-label-secondary">Отмена</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- /Sticky Actions -->
+{% endblock %}

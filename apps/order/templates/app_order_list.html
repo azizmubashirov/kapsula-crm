@@ -1,0 +1,735 @@
+{% extends layout_path %}
+
+{% load static %}
+{% load i18n %}
+{% load theme %}
+
+{% block title %}User List - Pages{% endblock %}
+
+{% block vendor_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-bs5/datatables.bootstrap5.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-responsive-bs5/responsive.bootstrap5.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-buttons-bs5/buttons.bootstrap5.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/select2/select2.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/@form-validation/umd/styles/index.min.css' %}" />
+
+<link rel="stylesheet" href="{% static 'vendor/libs/flatpickr/flatpickr.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/bootstrap-datepicker/bootstrap-datepicker.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/bootstrap-daterangepicker/bootstrap-daterangepicker.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/jquery-timepicker/jquery-timepicker.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/pickr/pickr-themes.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/bootstrap-select/bootstrap-select.css' %}" />
+<style>
+ table th{
+  font-size: 10px !important;
+  color: #ffff !important;
+ }
+ table td {
+  font-size: 12px !important;
+ }
+ .add-class td {
+  padding: 1px 1px !important;
+ }
+
+.custom__select .bootstrap-select .dropdown-menu {
+  min-width: 200px;
+  max-width: 200px;
+}
+
+.custom__select .bootstrap-select .dropdown-menu.inner a[aria-selected=true] {
+  background: #8a8a8a !important;
+}
+
+.custom__select {
+    position: relative;
+}
+
+.custom__select select {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+}
+
+.table > :not(caption) > * > * {
+  padding: 11px 0 !important;
+}
+@media (min-width: 1400px) {
+    .container-xxl, .container-xl, .container-lg, .container-md, .container-sm, .container {
+        max-width: 100%;
+    }
+}
+</style>
+{% endblock vendor_css %}
+
+{% block vendor_js %}
+{{ block.super }}
+<script src="{% static 'vendor/libs/select2/select2.js' %}"></script>
+<script src="{% static 'js/ui-popover.js' %}"></script>
+
+<script src="{% static 'vendor/libs/flatpickr/flatpickr.js' %}"></script>
+<script src="{% static 'vendor/libs/bootstrap-datepicker/bootstrap-datepicker.js' %}"></script>
+<script src="{% static 'vendor/libs/bootstrap-daterangepicker/bootstrap-daterangepicker.js' %}"></script>
+<script src="{% static 'vendor/libs/jquery-timepicker/jquery-timepicker.js' %}"></script>
+<script src="{% static 'vendor/libs/pickr/pickr.js' %}"></script>
+
+{% endblock vendor_js %}
+ 
+{% block page_js %}
+<script src="{% static 'vendor/libs/bootstrap-select/bootstrap-select.js' %}"></script>
+<script src="{% static 'js/forms-selects.js' %}"></script>
+<script src="{% static 'js/forms-pickers.js' %}"></script>
+<script>
+  function filterPage(addToPage){
+        var entries = $("#id_list_entries option:selected").val();
+        var search = $("#id_search").val();
+        var page = parseInt($("li.page-item.active a.page-link").html()) + addToPage;
+
+        const urlParams = new URLSearchParams(window.location.search);
+
+        urlParams.set('entries', entries);
+        urlParams.set('q', search);
+        urlParams.set('page', page);
+
+        window.location.search = urlParams;
+    }
+    $("#id_list_entries").change(function(){
+        filterPage(-parseInt($("li.page-item.active a.page-link").html()) + 1);
+    });
+    $("#id_search").change(function(){
+        filterPage(-parseInt($("li.page-item.active a.page-link").html()) + 1);
+    });
+    $("a.page-link.page-number").click(function(e){
+        e.preventDefault();
+        var page = parseInt($(this).html());
+        if (parseInt($("li.page-item.active a.page-link").html()) != page){
+            filterPage(page - parseInt($("li.page-item.active a.page-link").html()));
+        }
+    });
+    $("a.page-link.with-next-row").click(function(e){
+        e.preventDefault();
+        filterPage(1);
+    });
+    $("a.page-link.with-prev-row").click(function(e){
+        e.preventDefault();
+        filterPage(-1);
+    });
+</script>
+{{ block.super }}
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    // Input elementlarini tanlab olish
+    const countInput = document.getElementById("id_count");
+    const priceInput = document.getElementById("id_price");
+    const resultDisplay = document.getElementById("id_total_price_order");
+
+    function calculateProduct() {
+        const priceValue = parseFloat(priceInput.value) || 0;
+        const countValue = parseFloat(countInput.value) || 0;
+        const product = countValue * priceValue;
+
+        resultDisplay.value = product.toFixed(2);
+    }
+
+    // Input elementlarida hodisalar qo'shish
+    priceInput.addEventListener("input", calculateProduct);
+    countInput.addEventListener("input", calculateProduct);
+});
+</script>
+<script>
+  function filterPage() {
+    var date = $("#datepicker").val();
+
+    const urlParams = new URLSearchParams(window.location.search);
+
+    urlParams.set('date', date);
+
+    window.location.search = urlParams;
+  }
+  flatpickr("#flatpickr-range", {
+      mode: "range",
+      dateFormat: "Y-m-d",
+      onChange: function(selectedDates, dateStr, instance) {
+          var date = dateStr.split(' to ');
+          if (date.length === 2) {
+            client = `{{obj.id}}`
+            const urlParams = new URLSearchParams(window.location.search);
+            urlParams.set('date', date);
+            urlParams.set('client', client);
+            window.location.search = urlParams;
+          }
+      }
+  });
+</script>
+<script>
+  $("#id_region").change(function(e){
+  var region_id = $("#id_region option:selected" ).val()
+  const districtSelect = document.getElementById('id_district');
+  $.ajax({
+          type: 'GET',
+          url: `/app/user/create/?region_id=${region_id}`,
+          success: function (response) {
+              console.log(response);
+              $("#id_district_field").html(response);
+          },
+      })
+})
+</script>
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    var tableContainer = document.getElementById("table-container"); 
+    if (tableContainer) {
+        tableContainer.scrollTop = tableContainer.scrollHeight;
+    }
+});
+</script>
+{% endblock page_js %}
+
+{% block content %}
+
+<div class="row">
+<div class="col-8">
+  <ul class="nav nav-pills flex-column flex-md-row">
+    {% for i in year_folders %}
+    <li class="nav-item"><a class="nav-link {% if i.name == current_year %}active{% endif %}" href="/app/order/list/?client={{obj.id}}&year={{i.name}}" style="padding: 0px 15px !important;">{{i.name}}</a></li>
+    {% endfor %}
+  </ul>
+</div>
+<div class="col-4 text-end">
+  <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#AddYear" >
+    <i class="fa-solid fa-folder-open"></i>
+  </button>
+  <button type="button" class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#modalToggle" >
+    <i class="fa-solid fa-eye"></i>
+  </button>
+</div>
+</div>
+<div class="card">
+  
+  <div class="card-datatable table-responsive pt-0">
+    <div id="DataTables_Table_0_wrapper" class="dataTables_wrapper dt-bootstrap5 no-footer">
+      <div class="card-header flex-column flex-md-row" style="padding: 0.5rem;">
+        <!-- <div class="head-label text-center">
+          <h6 class="card-title mb-0">{{obj.name}}</h>
+        </div> -->
+        <div class="dt-buttons btn-group flex-wrap">
+          <input type="text" class="form-control form-control-sm" placeholder="YYYY-MM-DD to YYYY-MM-DD" id="flatpickr-range" value="{{date.0}} {% if date.0 and date.1 %}to{% endif %} {{date.1}}" style="width: 250px;"/>
+        </div>
+        <div class="dt-buttons btn-group flex-wrap">
+          <h6 class="mb-0 fw-medium">{{obj.name}}</h6>
+        </div>
+
+        <div class="col-6 product_status text-end">
+            <div class="dt-buttons btn-group flex-wrap">
+              <a href="/app/order/export/data?client={{obj.id}}&year={{current_year}}"
+                class="btn btn-secondary buttons-collection  btn-label-primary me-4  border-none btn-sm">
+                <i class="fa-solid fa-download me-sm-1"></i>
+                <span class="d-none d-sm-inline-block">Excel</span>
+            </a>
+            </div>
+            <div class="d-inline-block">
+              <a href="" class="btn btn-sm btn-text-secondary rounded-pill btn-icon dropdown-toggle hide-arrow"
+                data-bs-toggle="dropdown"><i class="ti ti-dots-vertical ti-md"></i>
+              </a>
+              <ul class="dropdown-menu dropdown-menu-end m-0">
+                <li><a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#EditFolder" >Редактировать клиент</a></li>
+                <div class="dropdown-divider"></div>
+                <li><a href="/app/delete/folders/{{obj.id}}" class="dropdown-item text-danger delete-record">Удалить</a></li>
+              </ul>
+            </div>
+        </div>
+       
+      </div>
+      <hr class="my-0">
+      <div style="overflow-y: auto; height: 550px;" id="table-container">
+
+        <table class="table table-bordered text-center" style="width: 100%; border: 1px solid black;" >
+          <colgroup>
+            <col span="1" style="width: 5%;">
+            <col span="1" style="width: 10%;">
+            <col span="1" style="width: 7%;">
+            <col span="1" style="width: 7%;">
+            <col span="1" style="width: 7%;">
+            <col span="1" style="width: 7%;">
+            <col span="1" style="width: 5%;">
+            <col span="1" style="width: 7%;">
+            <col span="1" style="width: 10%;">
+            <col span="1" style="width: 10%;">
+         </colgroup>
+          <thead class="text-black" style="position: sticky;
+              top: 0; z-index: 2; background-color: #0ace0e;">
+            <tr>
+            <th>Дата</th>
+            <th>Продукт</th>
+            <th>количество</th>
+            <th>Цена</th>
+            <th>Сумма</th>
+            <th>Оплата (сум)</th>
+            <th>Оплата</th>
+            <th>Оплата Дата</th>
+            <th>Остаток</th>
+            <th>Комментарий</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% with all_items=items %}
+            {% for item in items %}
+                {% if not forloop.first %}
+                {% with prev_item=all_items|slice:forloop.counter0|last %}
+                    {% if prev_item.created_date != item.created_date %}
+                        <tr>
+                          <td style="height: 40px;"></td>
+                          <td style="height: 40px;"></td>
+                          <td style="height: 40px;"></td>
+                          <td style="height: 40px;"></td>
+                          <td style="height: 40px;"></td>
+                          <td style="height: 40px;"></td>
+                          <td style="height: 40px;"></td>
+                          <td style="height: 40px;"></td>
+                          <td style="height: 40px;">{% perv_item_payment prev_item%}</td>
+                          <td style="height: 40px;"></td>
+                        </tr>
+                    {% endif %}
+                {% endwith %}
+            {% endif %}
+
+
+
+            <tr>
+              <td data-bs-toggle="tooltip" data-bs-placement="top" title="{{item.created_date|date:'d.m.Y'}}" >{{item.created_date|date:"d-M"}}</td>
+              <td>
+                <div style="display: flex; align-items: center; gap:70px; justify-content: flex-end; padding: 0 10px !important;">
+                  {{item.product}}
+                {% if item.product and item.color_obj %}
+                  <span style="position: relative; width: 100px; height: 30px; padding: 0%; padding-top: 5px;
+                  background: {% if item.color_obj %} {{item.color_obj.code}} {% else %} {{ item.color }}{% endif %}; 
+                  border: 1px solid black;
+                  {% if item.color == '#000000' or item.color_obj.code == '#000000' %}
+                      color: #ffff;
+                  {% else %} 
+                      color: #000;
+                  {% endif %}">{{item.color_obj.name}}</span>  
+                {% endif %}
+                </div>
+              </td>
+              <td>{{item.count}}</td>
+              <td>{{item.price|simplify_number}}</td>
+              <td>{{item.total_price|simplify_number}}</td>
+  
+              {% order_payment_calculation item current_year %}
+              <div class="modal fade" id="EditOrder-{{item.id}}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered1 modal-simple modal-add-new-cc">
+                  <div class="modal-content p-3 p-md-5">
+                    <div class="modal-body">
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                      <div class="text-center mb-4">
+                        <h3 class="mb-2">Изменить заказ</h3>
+                      </div>
+                      <form id="EditOrder-form" autocomplete="off" class="row g-3" method="post" action="/app/order/edit/{{item.id}}?client={{obj.id}}&year={{current_year}}">
+                        {% csrf_token %}
+                        <div class="row">
+                        <div class="col-4 mb-4">
+                            <label class="required form-label" for="id_amount">Дата</label>
+                            <div class="input-group input-group-merge">
+                              <input type="text" name="created_date" class="form-control" value="{{item.created_date|date:'d/m'}}"  required>
+                            </div>
+                        </div>
+                        <div class="col-4 mb-4">
+                          <label class="required form-label" for="id_product">грамм</label>
+                          <div class="input-group input-group-merge">
+                            <input type="text" name="product" class="form-control" value="{{item.product}}">
+                          </div>
+                        </div>
+                        <div class="col-4 mb-4">
+                          <label class="required form-label" for="id_product">Цвет</label>
+                          <div class="input-group input-group-merge">
+                            <select name="color" id="id_color_edit" class="form-control form-select" style="width: 45%;">
+                              <option value="0">цвета</option>
+                              {% for obj in colors %}
+                              <option value="{{obj.id}}" {% if obj.id == item.color_obj.id %} selected {% endif %}
+                                style="background-color: {{ obj.code }}; 
+                                border: 1px solid black;
+                                {% if obj.code == '#000000' %} 
+                                    color: #ffff;
+                                {% else %} 
+                                    color: #000;
+                                {% endif %}"
+                                >{{obj.name}}</option>
+                              {% endfor %}
+                            </select>
+                          </div>
+                        </div>
+                        <div class="col-4 mb-4">
+                          <label class="required form-label" for="id_product">количество</label>
+                          <div class="input-group input-group-merge">
+                            <input type="number" name="count" class="form-control" value="{{item.count}}">
+                          </div>
+                        </div>
+                        <div class="col-4 mb-4">
+                          <label class="required form-label" for="id_product"> Цена</label>
+                          <div class="input-group input-group-merge">
+                            <input type="text" name="price" class="form-control" value="{{item.price|simplify_number}}">
+                          </div>
+                        </div>
+                        <div class="col-4 mb-4">
+                          <label class="required form-label" for="id_product">Сумма</label>
+                          <div class="input-group input-group-merge">
+                            <input type="text" name="total_price" class="form-control" value="{{item.total_price|simplify_number}}" required>
+                          </div>
+                        </div>
+
+                        {% edit_order item as items %}
+                        {% for obj in items %}
+                        <div class="col-6 mb-4">
+                          <label class="required form-label" for="id_product">Оплата {{ forloop.counter }}</label>
+                          <div class="input-group input-group-merge">
+                            <input type="text" name="paid_price" class="form-control" value="{{obj.paid_price|simplify_number}}">
+                          </div>
+                        </div>
+                        <div class="col-6 mb-4">
+                          <label class="required form-label" for="id_product">Коммент {{ forloop.counter }}</label>
+                          <div class="input-group input-group-merge">
+                            <input type="text" name="paid_price-comment" class="form-control" value="{{obj.comment}}">
+                          </div>
+                        </div>
+                        {% endfor %}
+                      </div>
+                        <div class="col-12 text-center">
+                          <button type="submit" class="btn btn-primary me-sm-3 me-1">Добавить</button>
+                          <button type="reset" class="btn btn-label-secondary btn-reset" data-bs-dismiss="modal" aria-label="Close">Отмена</button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            {% empty %}
+            <tr>
+              <td colspan=10> No items found.</td>
+            </tr>
+            {% endfor %}
+            {% if items %}
+            <tr>
+              <td colspan="8"></td>
+              <td class="text-center">
+                  <b class="text-black">{% calculation_remainder items %}</b>
+              </td>
+            </tr>
+            {% endif %}
+            <tr class="add-class" style="position: sticky; bottom: 0; background: #fff;">
+              <form method="POST" autocomplete="off">
+                {% csrf_token %}
+              <td>
+                <input type="text" name="created_date" class="form-control form-control-sm" placeholder="dd/mm" style="padding: 0 0 !important;">
+              </td>
+              <td style="display: flex; align-items: center;" class="custom__select">
+                  <input type="text" name="product" class="form-control form-control-sm" placeholder="грамм">
+                  <select name="color_obj" id="id_color" class="selectpicker form-control-sm" style="width: 45%;">
+                    <option value="" style="padding: 0px !important;">цвета</option>
+                    {% for obj in colors %}
+                    <option value="{{obj.id}}" 
+                      style="background-color: {{ obj.code }}; padding: 0px !important;
+                      border: 1px solid black;
+                      {% if obj.code == '#000000' %} 
+                          color: #ffff;
+                      {% else %} 
+                          color: #000;
+                      {% endif %}"
+                      >{{obj.name}}</option>
+                    {% endfor %}
+                  </select>
+              </td>
+              <td>
+                <input type="number" name="count" class="form-control form-control-sm" id="id_count">
+              </td>
+              <td>
+                <input type="text" name="price" class="form-control form-control-sm" id="id_price">
+              </td>
+              <td >
+                <input type="text" name="total_price_order" class="form-control form-control-sm" id="id_total_price_order">
+              </td>
+              <td class="text-center">
+                <input type="number" name="paid_amount_sum" class="form-control form-control-sm" id="id_price">
+              </td>
+              <td>
+                <input type="text" name="paid_amount" class="form-control form-control-sm" id="id_paid_amount">
+              </td>
+              <td>
+                
+              </td>
+              <td>
+                  <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="ti ti-plus"></i>
+                  </button>
+              </td>
+              <td>
+                <input type="text" name="comment" class="form-control form-control-sm" id="id_commentt">
+              </td>
+            </form>
+            </tr>
+            {% endwith %}
+          </tbody>
+        </table>
+      </div>
+      
+    </div>
+  </div>
+  <!-- </form> -->
+</div>
+
+<div class="modal fade" id="PaidAmount" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered1 modal-simple modal-add-new-cc">
+    <div class="modal-content p-3 p-md-5">
+      <div class="modal-body">
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="text-center mb-4">
+          <h3 class="mb-2">Добавить Оплата</h3>
+        </div>
+        <form id="PaidAmount-form" autocomplete="off" class="row g-3" method="post" action="/app/order-payment/{{item.id}}?client={{obj.id}}&year={{current_year}}">
+          {% csrf_token %}
+          <div class="col-12 mb-4">
+            <div class="col-12 mb-4">
+            <label class="required form-label" for="id_amount">Оплата</label>
+            <div class="input-group input-group-merge">
+              <input type="text" name="amount" class="form-control" id="id_amount">
+             
+            </div>
+          </div>
+          <div class="col-md">
+            <div class="form-check form-check-inline mt-3">
+              <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio1" value="plus" checked/>
+              <label class="form-check-label" for="inlineRadio1"><b>+ (Плюс)</b></label>
+            </div>
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio2" value="minus" />
+              <label class="form-check-label" for="inlineRadio2"><b>- (Минус)</b></label>
+            </div>
+           
+          </div>
+           
+          </div>
+          <div class="col-12 mb-4">
+            <label class="required form-label" for="id_commentt">Оплата</label>
+            <div class="input-group input-group-merge">
+              <textarea name="comment" id="id_commentt" class="form-control"></textarea>
+            </div>
+          </div>
+          <div class="col-12 text-center">
+            <button type="submit" class="btn btn-primary me-sm-3 me-1">Добавить</button>
+            <button type="reset" class="btn btn-label-secondary btn-reset" data-bs-dismiss="modal" aria-label="Close">Отмена</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="AddPaymentClient" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered1 modal-simple modal-add-new-cc">
+    <div class="modal-content p-3 p-md-5">
+      <div class="modal-body">
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="text-center mb-4">
+          <h3 class="mb-2">Добавить Оплата</h3>
+        </div>
+        <form id="AddPayment-form" autocomplete="off" class="row g-3" method="post" action="/app/add-payment?client={{obj.id}}&year={{current_year}}">
+          {% csrf_token %}
+          <div class="col-12 mb-4">
+            <div class="col-12 mb-4">
+            <label class="required form-label" for="id_amount">Оплата</label>
+            <div class="input-group input-group-merge">
+              <input type="text" name="amount" class="form-control" id="id_amount">
+            </div>
+          </div>
+          <div class="col-md">
+            <div class="form-check form-check-inline mt-3">
+              <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio1" value="plus" checked/>
+              <label class="form-check-label" for="inlineRadio1"><b>+ (Плюс)</b></label>
+            </div>
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio2" value="minus" />
+              <label class="form-check-label" for="inlineRadio2"><b>- (Минус)</b></label>
+            </div>
+           
+          </div>
+           
+          </div>
+          <div class="col-12 mb-4">
+            <label class="required form-label" for="id_commentt">Оплата</label>
+            <div class="input-group input-group-merge">
+              <textarea name="comment" id="id_commentt" class="form-control"></textarea>
+            </div>
+          </div>
+          <div class="col-12 text-center">
+            <button type="submit" class="btn btn-primary me-sm-3 me-1">Добавить</button>
+            <button type="reset" class="btn btn-label-secondary btn-reset" data-bs-dismiss="modal" aria-label="Close">Отмена</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="EditFolder" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered1 modal-simple modal-add-new-cc">
+    <div class="modal-content p-3 p-md-5">
+      <div class="modal-body">
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="text-center mb-4">
+          <h3 class="mb-2">Редактировать папку</h3>
+        </div>
+        <form id="form" autocomplete="off" class="row g-3" method="post" action="/app/order-edit/folders/{{obj.id}}?year={{current_year}}">
+          {% csrf_token %}
+          <div class="row">
+            <div class="col-4 mb-4">
+              {{folder_form.name.errors}}
+              <label class="required form-label" for="{{ folder_form.name.id_for_label }}">{{ folder_form.name.label }}</label>
+              {{ folder_form.name }}
+            </div>
+            <div class="col-4 mb-4">
+              {{folder_form.region.errors}}
+              <label class="required form-label" for="{{ folder_form.region.id_for_label }}">{{ folder_form.region.label }}</label>
+              {{ folder_form.region }}
+            </div>
+            <div class="col-4 mb-4" id="id_district_field">
+              {{folder_form.district.errors}}
+              <label class="required form-label" for="{{ folder_form.district.id_for_label }}">{{ folder_form.district.label }}</label>
+              {{ folder_form.district }}
+            </div>
+            <div class="col-6 mb-4">
+              {{folder_form.phone_number.errors}}
+              <label class="required form-label" for="{{ folder_form.phone_number.id_for_label }}">{{ folder_form.phone_number.label }}</label>
+              {{ folder_form.phone_number }}
+            </div>
+            <div class="col-6 mb-4">
+              {{folder_form.first_name.errors}}
+              <label class="required form-label" for="{{ folder_form.first_name.id_for_label }}">{{ folder_form.first_name.label }}</label>
+              {{ folder_form.first_name }}
+            </div>
+            <div class="col-12 mb-4">
+              {{folder_form.product.errors}}
+              <label class="required form-label" for="{{ folder_form.product.id_for_label }}">{{ folder_form.product.label }}</label>
+              {{ folder_form.product }}
+            </div>
+            <div class="col-12 mb-4">
+              {{folder_form.comment.errors}}
+              <label class="required form-label" for="{{ folder_form.comment.id_for_label }}">{{ folder_form.comment.label }}</label>
+              {{ folder_form.comment }}
+            </div>
+            
+          </div>
+          <div class="col-12 text-center">
+            <button type="submit" class="btn btn-primary me-sm-3 me-1">Добавить</button>
+            <button type="reset" class="btn btn-label-secondary btn-reset" data-bs-dismiss="modal" aria-label="Close">Отмена</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="AddYear" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered1 modal-simple modal-add-new-cc">
+    <div class="modal-content p-3 p-md-5">
+      <div class="modal-body">
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="text-center mb-4">
+          <h3 class="mb-2">Редактировать папку</h3>
+        </div>
+        <form id="form" autocomplete="off" class="row g-3" method="post" action="/app/add-year/{{obj.id}}">
+          {% csrf_token %}
+          <div class="row">
+            <div class="col-12 mb-4">
+              <label class="required form-label">Год</label>
+              <select class="form-select" id="year-select" name="year">
+                {% for year in years %}
+                    <option value="{{ year }}">
+                        {{ year }}
+                    </option>
+                {% endfor %}
+            </select>
+            </div>
+            
+          </div>
+          <div class="col-12 text-center">
+            <button type="submit" class="btn btn-primary me-sm-3 me-1">Добавить</button>
+            <button type="reset" class="btn btn-label-secondary btn-reset" data-bs-dismiss="modal" aria-label="Close">Отмена</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modalToggle" aria-labelledby="modalToggleLabel" tabindex="-1" style="display: none;" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <ul class="list-unstyled">
+          <li class="mb-2">
+            <span class="fw-medium me-1"><b>Компания:</b></span>
+             <span>{{obj.name}}</span>
+          </li>
+          <li class="mb-2">
+            <span class="fw-medium me-1"><b>Контакт:</b></span>
+             <span>{{obj.phone_number}} {{obj.first_name}}</span>
+          </li>
+         
+          <li class="mb-2 pt-1">
+            <span class="fw-medium me-1"><b>Область:</b></span>
+            <span>{{obj.region}}</span>
+          </li>
+          <li class="mb-2 pt-1">
+            <span class="fw-medium me-1"><b>Туман:</b></span>
+            <span>{{obj.district}}</span>
+          </li>
+          <li class="mb-2 pt-1">
+            <span class="fw-medium me-1"><b>День:</b></span>
+            <span>{{obj.created_at|date:"Y-m-d"}}</span>
+          </li>
+          <li class="mb-2 pt-1">
+            <span class="fw-medium me-1"><b>Продукт:</b></span><br>
+            {% for product in obj.product.all %}
+            <span>{{forloop.counter}}. {{product}}</span><br>
+            {% endfor %}
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+      // Находим все кнопки, которые открывают модалку
+      document.querySelectorAll("[data-bs-target='#PaidAmount']").forEach(button => {
+          button.addEventListener("click", function() {
+              // Получаем значение data-objId
+              let objId = this.getAttribute("data-objId");
+  
+              // Находим форму внутри модального окна
+              let form = document.querySelector("#PaidAmount-form");
+  
+              // Обновляем action у формы
+              form.action = `/app/order-payment/${objId}?client={{ obj.id }}&year={{current_year}}`;
+          });
+      });
+      document.querySelectorAll("[data-bs-target='#EditOrder']").forEach(button => {
+          button.addEventListener("click", function() {
+              // Получаем значение data-objId
+              let objId = this.getAttribute("data-objId");
+  
+              // Находим форму внутри модального окна
+              let form = document.querySelector("#EditOrder-form");
+  
+              // Обновляем action у формы
+              form.action = `/app/order-payment/${objId}?client={{ obj.id }}&year={{current_year}}`;
+          });
+      });
+  });
+</script>
+
+{% endblock %}

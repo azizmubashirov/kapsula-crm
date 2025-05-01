@@ -1,0 +1,137 @@
+{% extends layout_path %}
+
+{% load static %}
+{% load i18n %}
+
+{% block title %}Dashboard - eCommerce{% endblock %}
+
+{% block vendor_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'vendor/libs/apex-charts/apex-charts.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-bs5/datatables.bootstrap5.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-responsive-bs5/responsive.bootstrap5.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-buttons-bs5/buttons.bootstrap5.css' %}" />
+{% endblock vendor_css %}
+
+{% block vendor_js %}
+{{ block.super }}
+<script src="{% static 'vendor/libs/apex-charts/apexcharts.js' %}"></script>
+<script src="{% static 'vendor/libs/datatables-bs5/datatables-bootstrap5.js' %}"></script>
+{% endblock vendor_js %}
+
+{% block page_js %}
+{{ block.super }}
+<script src="{% static 'js/app-ecommerce-dashboard.js' %}"></script>
+{% endblock page_js %}
+
+{% block content %}
+<div class="row">
+  
+  <div class="col-xl-8 mb-4">
+    <div class="card h-100">
+      <div class="card-header">
+        <div class="d-flex justify-content-between mb-3">
+          <h5 class="card-title mb-0">Статистика</h5>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="row gy-3">
+          <div class="col-md-4 col-6">
+            <div class="d-flex align-items-center">
+              <div class="badge rounded-pill bg-label-primary me-3 p-2"><i class="ti ti-chart-pie-2 ti-sm"></i></div>
+              <div class="card-info">
+                <h5 class="mb-0">{{order_count}}</h5>
+                <small>Продажи</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4 col-6">
+            <div class="d-flex align-items-center">
+              <div class="badge rounded-pill bg-label-info me-3 p-2"><i class="ti ti-users ti-sm"></i></div>
+              <div class="card-info">
+                <h5 class="mb-0">{{clients_count}}</h5>
+                <small>Клиенты</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4 col-6">
+            <div class="d-flex align-items-center">
+              <div class="badge rounded-pill bg-label-danger me-3 p-2"><i class="ti ti-shopping-cart ti-sm"></i></div>
+              <div class="card-info">
+                <h5 class="mb-0">{{order_total_price}}</h5>
+                <small>Распродажа</small>
+              </div>
+            </div>
+          </div>
+          
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-4"></div>
+
+  <div class="col-xl-8">
+    <div class="card">
+      <div class="table-responsive card-datatable">
+        <table class="datatables-basic table dataTable no-footer dtr-column table table-bordered" id="DataTables_Table_0" aria-describedby="DataTables_Table_0_info" >
+          <thead>
+            <tr>
+            <th>Дата</th>
+            <th>Продукт</th>
+            <th>Меш</th>
+            <th class="text-center">Приход</th>
+            <th>Цена</th>
+            <th>Сумма</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in last_orders %}
+            <tr>
+              <td>{{item.created_at|date:"d-M/Y"}}</td>
+              <td style="background-color: {{item.product.color.code}}; color:#fff;">{{item.product.product}}</td>
+              <td>{{item.mesh}}</td>
+              <td class="text-center">{{item.count}}</td>
+              <td>{{item.price}}</td>
+              <td>{{item.total_price}}</td>
+            {% empty %}
+            <tr>
+              <td colspan=7> No items found.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6 col-xl-4 mb-4">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between">
+        <div class="card-title m-0 me-2">
+          <h5 class="m-0 me-2">Продажи</h5>
+          <small class="text-muted">Регионы с наибольшим объемом продаж</small>
+        </div>
+      </div>
+      <div class="card-body">
+        <ul class="p-0 m-0">
+          {% for obj in sales_by_region %}
+          <li class="d-flex mb-3 pb-1 align-items-center">
+            <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+              <div class="me-2">
+                <h6 class="mb-0">{{obj.region__name_uz}}</h6>
+              </div>
+              <div class="user-progress d-flex align-items-center gap-1">
+                <h6 class="mb-0 text-success">{{obj.total_sold}}</h6>
+              </div>
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+  
+ 
+</div>
+
+{% endblock %}

@@ -1,0 +1,149 @@
+{% extends layout_path %}
+
+{% load static %}
+{% load i18n %}
+
+{% block title %}User View - Pages{% endblock %}
+
+{% block vendor_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-bs5/datatables.bootstrap5.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-responsive-bs5/responsive.bootstrap5.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-buttons-bs5/buttons.bootstrap5.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/animate-css/animate.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/sweetalert2/sweetalert2.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/select2/select2.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/@form-validation/umd/styles/index.min.css' %}" />
+{% endblock vendor_css %}
+
+{% block vendor_js %}
+{{ block.super }}
+<script src="{% static 'vendor/libs/moment/moment.js' %}"></script>
+<script src="{% static 'vendor/libs/datatables-bs5/datatables-bootstrap5.js' %}"></script>
+<script src="{% static 'vendor/libs/sweetalert2/sweetalert2.js' %}"></script>
+<script src="{% static 'vendor/libs/cleavejs/cleave.js' %}"></script>
+<script src="{% static 'vendor/libs/cleavejs/cleave-phone.js' %}"></script>
+<script src="{% static 'vendor/libs/select2/select2.js' %}"></script>
+<script src="{% static 'vendor/libs/@form-validation/umd/bundle/popular.min.js' %}"></script>
+<script src="{% static 'vendor/libs/@form-validation/umd/plugin-bootstrap5/index.min.js' %}"></script>
+<script src="{% static 'vendor/libs/@form-validation/umd/plugin-auto-focus/index.min.js' %}"></script>
+<style>
+  .table > :not(caption) > * > * {
+    padding: 0.55rem 1rem !important;
+}
+</style>
+{% endblock vendor_js %}
+
+{% block page_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'vendor/css/pages/page-user-view.css' %}" />
+{% endblock page_css %}
+
+{% block page_js %}
+{{ block.super }}
+<script src="{% static 'js/modal-edit-user.js' %}"></script>
+<script src="{% static 'js/app-user-view.js' %}"></script>
+<script src="{% static 'js/app-user-view-account.js' %}"></script>
+<script>
+  function filterPage(addToPage){
+        var entries = $("#id_list_entries option:selected").val();
+        var search = $("#id_search").val();
+        var page = parseInt($("li.page-item.active a.page-link").html()) + addToPage;
+
+        const urlParams = new URLSearchParams(window.location.search);
+
+        urlParams.set('entries', entries);
+        urlParams.set('q', search);
+        urlParams.set('page', page);
+        window.location.search = urlParams;
+    }
+    $("#id_list_entries").change(function(){
+        filterPage(-parseInt($("li.page-item.active a.page-link").html()) + 1);
+    });
+    $("#id_search").change(function(){
+        filterPage(-parseInt($("li.page-item.active a.page-link").html()) + 1);
+    });
+    $("a.page-link.page-number").click(function(e){
+        e.preventDefault();
+        var page = parseInt($(this).html());
+        if (parseInt($("li.page-item.active a.page-link").html()) != page){
+            filterPage(page - parseInt($("li.page-item.active a.page-link").html()));
+        }
+    });
+    $("a.page-link.with-next-row").click(function(e){
+        e.preventDefault();
+        filterPage(1);
+    });
+    $("a.page-link.with-prev-row").click(function(e){
+        e.preventDefault();
+        filterPage(-1);
+    });
+</script>
+{% endblock page_js %}
+
+{% block content %}
+
+<div class="row">
+  <!-- User Sidebar -->
+  <div class="col-xl-12 col-lg-5 col-md-5 order-1 order-md-0">
+    <!-- User Card -->
+    <div class="card mb-4">
+      <div class="card-body">
+        
+        <p class="mt-4 small text-uppercase text-muted">Подробности</p>
+        <div class="info-container">
+          <ul class="list-unstyled">
+            <li class="mb-2">
+              <span class="fw-medium me-1"><b>Компания:</b></span>
+               <span>{{object}}</span>
+            </li>
+           
+            <li class="mb-2 pt-1">
+              <span class="fw-medium me-1"><b>Область:</b></span>
+              <span>{{object.region}}</span>
+            </li>
+            <li class="mb-2 pt-1">
+              <span class="fw-medium me-1"><b>Туман:</b></span>
+              <span>{{object.district}}</span>
+            </li>
+            <li class="mb-2 pt-1">
+              <span class="fw-medium me-1"><b>Категория:</b></span><br>
+              {% for category in object.category.all %}
+              <span>{{forloop.counter}}. {{category}}</span><br>
+              {% endfor %}
+            </li>
+            <li class="mb-2 pt-1">
+              <span class="fw-medium me-1"><b>День:</b></span>
+              <span>{{object.created_at|date:"Y-m-d"}}</span>
+            </li>
+            <li class="mb-2 pt-1">
+              <span class="fw-medium me-1"><b>Продукт:</b></span><br>
+              {% for product in object.product.all %}
+              <span>{{forloop.counter}}. {{product}}</span><br>
+              {% endfor %}
+            </li>
+            
+            <li class="mb-2">
+              <span class="fw-medium me-1"><b>Номера телефонов:</b></span><br>
+              {% for contact in object.client_contacts.all %}
+               <span>{{forloop.counter}}. {{contact.name}} {{contact.phone_number}}</span> <br>
+              {% endfor %}
+            </li>
+          </ul>
+          <div class="d-flex justify-content-center">
+            <a href="/app/user/{{client.id}}/edit/" class="btn btn-primary me-3">Редактировать</a>
+            <a href="/app/user/{{client.id}}/delete/" class="btn btn-label-danger suspend-user">Удалить</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <!--/ User Sidebar -->
+
+
+
+</div>
+<!-- /Modal -->
+
+{% endblock %}

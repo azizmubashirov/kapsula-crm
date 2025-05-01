@@ -1,0 +1,35 @@
+{% for obj in stocks %}
+<div class="col-12 mb-2">
+    <label class="required form-label">Грамм</label>
+    <input type="hidden" value="{{obj.id}}" name="shipment_id">
+    <div class="input-group input-group-merge">
+        <select name="product" class="form-control">
+            {% for product in products %}
+            <option value="{{ product.id }}" {% if product.id == obj.product.id %} selected {% endif %}>
+                {{ product }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+</div>
+<div class="row">
+    <div class="col-6 mb-2">
+        <label class="required form-label">Цвет</label>
+        <div class="input-group input-group-merge">
+            <select name="color" class="form-control">
+                {% for color in colors %}
+                <option value="{{ color.id }}" {% if color.id == obj.color.id %} selected {% endif %}>
+                    {{ color }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    <div class="col-6 mb-2">
+        <label class="required form-label">Количество</label>
+        <div class="input-group input-group-merge">
+            <input type="number" name="count" value="{{ obj.quantity_changed }}" class="form-control">
+        </div>
+    </div>
+</div>
+{% endfor %}

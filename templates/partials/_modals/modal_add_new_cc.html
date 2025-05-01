@@ -1,0 +1,33 @@
+<!-- Add New Credit Card Modal -->
+<div class="modal fade" id="addNewCCModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered1 modal-simple modal-add-new-cc">
+    <div class="modal-content p-3 p-md-5">
+      <div class="modal-body">
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="text-center mb-4">
+          <h3 class="mb-2">Добавить сырье</h3>
+        </div>
+        <form id="addNewCCForm" class="row g-3" method="post">
+          {% csrf_token %}
+          <div class="col-12">
+            <label class="required form-label" for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+            <div class="input-group input-group-merge">
+              {{form.name}}
+              <span class="input-group-text cursor-pointer p-1" id="modalAddCard2"><span class="card-type"></span></span>
+            </div>
+          </div>
+          <div class="col-12 col-md-12">
+            <label class="required form-label" for="{{ form.name.id_for_label }}">{{ form.amount.label }}</label>
+            {{form.amount}}
+          </div>
+         
+          <div class="col-12 text-center">
+            <button type="submit" class="btn btn-primary me-sm-3 me-1">Добавить</button>
+            <button type="reset" class="btn btn-label-secondary btn-reset" data-bs-dismiss="modal" aria-label="Close">Отмена</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<!--/ Add New Credit Card Modal -->

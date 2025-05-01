@@ -1,0 +1,302 @@
+{% extends layout_path %}
+
+{% load static %}
+{% load i18n %}
+{% load theme %}
+
+{% block title %}User List - Pages{% endblock %}
+
+{% block vendor_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-bs5/datatables.bootstrap5.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-responsive-bs5/responsive.bootstrap5.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-buttons-bs5/buttons.bootstrap5.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/select2/select2.css' %}" />
+{% endblock vendor_css %}
+
+{% block vendor_js %}
+{{ block.super }}
+<script src="{% static 'vendor/libs/moment/moment.js' %}"></script>
+<script src="{% static 'vendor/libs/datatables-bs5/datatables-bootstrap5.js' %}"></script>
+<script src="{% static 'vendor/libs/select2/select2.js' %}"></script>
+<script src="{% static 'vendor/libs/@form-validation/umd/bundle/popular.min.js' %}"></script>
+<script src="{% static 'vendor/libs/@form-validation/umd/plugin-bootstrap5/index.min.js' %}"></script>
+<script src="{% static 'vendor/libs/@form-validation/umd/plugin-auto-focus/index.min.js' %}"></script>
+<script src="{% static 'vendor/libs/cleavejs/cleave.js' %}"></script>
+<script src="{% static 'vendor/libs/cleavejs/cleave-phone.js' %}"></script>
+
+{% endblock vendor_js %}
+
+{% block page_js %}
+<script>
+  function filterPage(addToPage) {
+    var entries = $("#id_list_entries option:selected").val();
+    var product = $("#Product option:selected").val();
+    var product_color = $("#ProductColor option:selected").val();
+    // var search = $("#id_search").val();
+    var page = parseInt($("li.page-item.active a.page-link").html()) + addToPage;
+
+    const urlParams = new URLSearchParams(window.location.search);
+
+    urlParams.set('entries', entries);
+    urlParams.set('product', product);
+    urlParams.set('color', product_color);
+    // urlParams.set('q', search);
+    urlParams.set('page', page);
+
+    window.location.search = urlParams;
+  }
+  // $("#id_list_entries, #Product, #ProductColor").change(function () {
+  //   filterPage(-parseInt($("li.page-item.active a.page-link").html()) + 1);
+  // });
+  $("#id_search").change(function () {
+    filterPage(-parseInt($("li.page-item.active a.page-link").html()) + 1);
+  });
+  $("a.page-link.page-number").click(function (e) {
+    e.preventDefault();
+    var page = parseInt($(this).html());
+    if (parseInt($("li.page-item.active a.page-link").html()) != page) {
+      filterPage(page - parseInt($("li.page-item.active a.page-link").html()));
+    }
+  });
+  $("a.page-link.with-next-row").click(function (e) {
+    e.preventDefault();
+    filterPage(1);
+  });
+  $("a.page-link.with-prev-row").click(function (e) {
+    e.preventDefault();
+    filterPage(-1);
+  });
+
+</script>
+{{ block.super }}
+<!-- <script src="{% static 'js/app-user-list.js' %}"></script> -->
+{% endblock page_js %}
+
+
+{% block content %}
+<!-- clients List Table -->
+
+<div class="card">
+  <div class="card-datatable table-responsive pt-0">
+    <div id="DataTables_Table_0_wrapper" class="dataTables_wrapper dt-bootstrap5 no-footer" >
+      <div class="card-header flex-column flex-md-row" style="padding: 0px !important;">
+
+        <div class="col-md-4 product_status" id="Product">
+          <select class="form-select text-capitalize" id="productSelect">
+            <option value="0">Продукт</option>
+            {% for item in products %}
+            <option value="{{ item.id }}" {% if product == item.id %}selected{% endif %}>
+              {{ item.name }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        
+        <div class="col-md-2 product_status">
+            Количество:<h4 class="mb-2">{% total_calculation items %}</h4>
+        </div>
+        <div class="col-md-2 product_status">
+          кг:<h4 class="mb-2">{% total_weight_calculation items %}</h4>
+        </div>
+        <div class="col-md-2 product_status">
+            <div class="dt-buttons btn-group flex-wrap">
+              <a href="/app/export-production-product"
+                class="btn btn-secondary buttons-collection  btn-label-primary me-4  border-none">
+                <i class="fa-solid fa-download me-sm-1"></i>
+                <span class="d-none d-sm-inline-block">Excel</span>
+            </a>
+            </div>
+        </div>
+      </div>
+      <hr class="my-0">
+      <div style="overflow-y: auto; height: 520px;">
+      <table class="table table-hover table-bordered" style="border: 1px solid black; color: black;" >
+        <thead>
+          <tr style="position: sticky; top: 0; background: #fff;">
+            <th>Название</th>
+            <th>кол-во</th>
+            <th class="text-center">упаковка</th>
+            <th class="text-center">кг</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in items %}
+          
+          {% if item.product_color_quantity.all %}
+          <tr class="group">
+            <td style="color: black;" id="section{{item.product.id}}"><b>{{item.product.name}}</b></td>
+            <td></td>
+            <td class="text-center">
+              <button class="btn"
+                data-bs-toggle="modal" data-bs-target="#modal-add-price-{{item.id}}">
+                    <span class="ti ti-edit"></span>
+                </button>
+            </td>
+          </tr>
+          {% for obj in item.product_color_quantity.all %}
+          {% if not color or obj.color.id == color %}
+          <tr >
+            <td 
+            style="background-color: {{ obj.color.code }}; 
+                border: 1px solid black;
+                {% if obj.color.code == '#000000' %} 
+                    color: #ffff;
+                {% else %} 
+                    color: #000;
+                {% endif %} 
+              width:200px;" >{{obj.color.name}}</td>
+            <td class="text-center">{{obj.quantity}}</td>
+            <td class="text-center">{% pack_calculation obj.quantity item %}</td>
+            <td class="text-center">{% weight_calculation obj.quantity item %}</td>
+            <td class=" text-end">
+              <a href="/app/production-product/{{obj.id}}/delete-quantity/" class="btn rounded-pill btn-danger waves-effect waves-light me-5">
+                <i class="fa-solid fa-trash text-white"></i>
+              </a>
+              <button class="btn rounded-pill btn-secondary waves-effect waves-light me-5" data-bs-toggle="modal"
+                data-bs-target="#modal-{{obj.id}}">
+                <i class="fa-solid fa-plus text-white"></i>
+              </button>
+              <button class="btn rounded-pill btn-secondary waves-effect waves-light" style="padding: 15px;" data-bs-toggle="modal"
+                data-bs-target="#modal-edit-{{obj.id}}">
+                <i class="fa-solid fa-minus fa-xl text-white" ></i>
+              </button>
+              <div class="modal fade" id="modal-{{obj.id}}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered1 modal-simple modal-add-new-cc">
+                  <div class="modal-content p-3 p-md-5">
+                    <div class="modal-body">
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                      <div class="text-center mb-4">
+                        <h3 class="mb-2">Добавить</h3>
+                      </div>
+                      <form id="addNewCCForm" class="row g-3" method="post" autocomplete="off"
+                        action="/app/production-product/{{obj.id}}/create/">
+                        {% csrf_token %}
+                        <div class="col-12">
+                          <label class="required form-label" for="">Количество</label>
+                          <input type="number" name="quantity" class="form-control" id="id_amount">
+                        </div>
+                        <div class="col-8">
+                          <label class="required form-label" for="">Сырье</label>
+                          <select name="meterial" class="form-control">
+                            {% for meterial in meterials %}
+                            <optgroup label="{{ meterial.name }}">
+                              {% for item in meterial.stocks_list.all %}
+                              {% if item.amount > 0 %}
+                                <option value="{{ item.id }}">{{ item.name }}</option>
+                              {% endif %}
+                              {% endfor %}
+                            </optgroup>
+                            {% endfor %}
+                          </select>
+                        </div>
+                        <div class="col-4">
+                          <label class="required form-label" for="id_meterial_amount">Количество</label>
+                          <input type="number" name="meterial_amount" value="0" class="form-control"
+                            id="id_meterial_amount">
+                        </div>
+
+                        <div class="col-12 text-center">
+                          <button type="submit" class="btn btn-primary me-sm-3 me-1">Добавить</button>
+                          <button type="reset" class="btn btn-label-secondary btn-reset" data-bs-dismiss="modal"
+                            aria-label="Close">Отмена</button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="modal fade" id="modal-edit-{{obj.id}}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered1 modal-simple modal-add-new-cc">
+                  <div class="modal-content p-3 p-md-5">
+                    <div class="modal-body">
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                      <div class="text-center mb-4">
+                        <h3 class="mb-2">Продажа</h3>
+                      </div>
+                      <form id="addNewCCForm" class="row g-3" method="post" autocomplete="off"
+                        action="/app/production-product/{{obj.id}}/edit/">
+                        {% csrf_token %}
+                        <div class="col-12">
+                          <label class="required form-label" for="{{form.quantity.id_for_label}}">{{form.quantity.label}}</label>
+                          {{form.quantity }}
+                        </div>
+                        <div class="col-12">
+                          <label class="required form-label" for="{{form.region.id_for_label}}">{{form.region.label}}</label>
+                          {{form.region }}
+                        </div>
+                        <div class="col-12">
+                          <label class="required form-label" for="{{form.user.id_for_label}}">{{form.user.label}}</label>
+                          {{form.user }}
+                        </div>
+                        <div class="col-12 text-center">
+                          <button type="submit" class="btn btn-primary me-sm-3 me-1">Добавить</button>
+                          <button type="reset" class="btn btn-label-secondary btn-reset" data-bs-dismiss="modal"
+                            aria-label="Close">Отмена</button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          {% endif %}
+          {% endfor %}
+          <tr>
+            <td>&nbsp;</td>
+            {% amount_and_weight_count item %}
+          </tr>
+          <tr><td colspan="4">&nbsp;</td></tr>
+          <div class="modal fade" id="modal-add-price-{{item.id}}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered1 modal-simple modal-add-new-cc">
+              <div class="modal-content p-md-6">
+                <div class="modal-body">
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  <div class="text-center mb-4">
+                    <h3 class="mb-2">Добавить упаковка</h3>
+                  </div>
+                  <form id="addNewCCForm" class="row g-3" method="post" autocomplete="off"
+                    action="/app/production-product/{{item.product.id}}/change-price/">
+                    {% csrf_token %}
+                    <div class="col-md-12" style="margin-bottom: 20px;">
+                      <label class="required form-label" for="">штук</label>
+                      <input type="text" name="weight" value="{{item.product.pack}}" class="form-control" id="id_amount">
+                    </div>
+                    <div class="col-12 text-center">
+                      <button type="submit" class="btn btn-primary me-sm-3 me-1">Добавить</button>
+                      <button type="reset" class="btn btn-label-secondary btn-reset" data-bs-dismiss="modal"
+                        aria-label="Close">Отмена</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+          {% endfor %}
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById("productSelect").addEventListener("change", function () {
+  const selectedValue = this.value;
+  
+
+  if (selectedValue !== "0") { 
+    const targetSection = document.getElementById(`section${selectedValue}`);    
+    if (targetSection) {
+      targetSection.scrollIntoView({ behavior: "smooth" });
+    }
+  }
+});
+
+</script>
+
+{% endblock %}

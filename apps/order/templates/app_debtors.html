@@ -1,0 +1,129 @@
+{% extends layout_path %}
+
+{% load static %}
+{% load i18n %}
+{% load theme %}
+
+{% block title %}Dashboard - eCommerce{% endblock %}
+
+{% block vendor_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'vendor/libs/apex-charts/apex-charts.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-bs5/datatables.bootstrap5.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-responsive-bs5/responsive.bootstrap5.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables-buttons-bs5/buttons.bootstrap5.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/flatpickr/flatpickr.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/bootstrap-datepicker/bootstrap-datepicker.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/bootstrap-daterangepicker/bootstrap-daterangepicker.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/jquery-timepicker/jquery-timepicker.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/pickr/pickr-themes.css' %}" />
+{% endblock vendor_css %}
+
+{% block vendor_js %}
+{{ block.super }}
+<script src="{% static 'vendor/libs/apex-charts/apexcharts.js' %}"></script>
+<script src="{% static 'vendor/libs/datatables-bs5/datatables-bootstrap5.js' %}"></script>
+<script src="{% static 'vendor/libs/moment/moment.js' %}"></script>
+<script src="{% static 'vendor/libs/flatpickr/flatpickr.js' %}"></script>
+<script src="{% static 'vendor/libs/bootstrap-datepicker/bootstrap-datepicker.js' %}"></script>
+<script src="{% static 'vendor/libs/bootstrap-daterangepicker/bootstrap-daterangepicker.js' %}"></script>
+<script src="{% static 'vendor/libs/jquery-timepicker/jquery-timepicker.js' %}"></script>
+<script src="{% static 'vendor/libs/pickr/pickr.js' %}"></script>
+{% endblock vendor_js %}
+
+{% block page_js %}
+{{ block.super }}
+<script src="{% static 'js/app-ecommerce-dashboard.js' %}"></script>
+<script src="{% static 'js/forms-pickers.js' %}"></script>
+<script>
+flatpickr("#flatpickr-date", {
+            mode: "single",
+            dateFormat: "Y-m-d",
+            onChange: function(selectedDates, dateStr, instance) {
+              const urlParams = new URLSearchParams(window.location.search);
+              urlParams.set('date', dateStr);
+              window.location.search = urlParams;
+            }
+        });
+</script>
+{% endblock page_js %}
+
+{% block content %}
+<div class="row">
+  <div class="col-4 mb-4">
+    <div class="dt-buttons btn-group flex-wrap">
+      <a href="/app/debtors/export/data"
+        class="btn btn-secondary buttons-collection  btn-label-primary me-4  border-none">
+        <i class="fa-solid fa-download me-sm-1"></i>
+        <span class="d-none d-sm-inline-block">Excel</span>
+    </a>
+  </div>
+  
+  </div> 
+  <div class="col-8 mb-4">
+    <div class="dt-buttons btn-group flex-wrap "> 
+      <input type="text" class="form-control" placeholder="YYYY-MM-DD" id="flatpickr-date" value="{{date}}" />
+  </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-6 col-xl-6 mb-4">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between">
+        <div class="card-title m-0 me-2">
+          <h5 class="m-0 me-2">Qarzdorlar</h5>
+          <small class="text-muted">Qarzdorlar ro'yxati</small>
+        </div>
+      </div>
+      <div class="card-body">
+        <ul class="p-0 m-0">
+          {% for order in debtors %}
+          <li class="d-flex mb-3 pb-1 align-items-center">
+            <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+              <div class="me-2">
+                <h6 class="mb-0">{{order.client__name}}</h6>
+              </div>
+              <div class="user-progress d-flex align-items-center gap-1">
+                <h6 class="mb-0 text-danger">{{order.total_remainder|simplify_number}}</h6>
+              </div>
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+    <h6 class="mb-0 text-dark text-end my-4 mx-3">{{total_debt}}</h6>
+  </div>
+  <div class="col-md-6 col-xl-6 mb-4">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between">
+        <div class="card-title m-0 me-2">
+          <h5 class="m-0 me-2">Xaqdorlar</h5>
+          <small class="text-muted">Xaqdorlar ro'yxati</small>
+        </div>
+      </div>
+      <div class="card-body">
+        <ul class="p-0 m-0">
+          {% for order in creditors %}
+          <li class="d-flex mb-3 pb-1 align-items-center">
+            <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+              <div class="me-2">
+                <h6 class="mb-0">{{order.client__name}}</h6>
+              </div>
+              <div class="user-progress d-flex align-items-center gap-1">
+                <h6 class="mb-0 text-success">{{order.total_remainder|simplify_number}}</h6>
+              </div>
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+    <h6 class="mb-0 text-dark text-end my-4 mx-3">{{total_credit}}</h6>
+  </div>
+  
+ 
+</div>
+
+{% endblock %}

@@ -1,0 +1,77 @@
+{
+  "menu": [
+    {
+      "name": "Продажа",
+      "icon": "menu-icon tf-icons ti ti-shopping-cart",
+      "slug": "order",
+      "submenu": [
+        {
+          "url": "app-order-client-folder",
+          "name": "Продажа",
+          "slug": "order-folder"
+        },
+        {
+          "url": "app-debtors",
+          "name": "Должники",
+          "slug": "debtors"
+        },
+        {
+          "url": "app-user-list",
+          "name": "Клиенты",
+          "slug": "debtors"
+        },
+        {
+          "url": "index",
+          "name": "Статистика",
+          "slug": "dashboard"
+        }
+      ]
+    },
+    {
+      "url": "app-production-product-list",
+      "name": "Остатка",
+      "icon": "menu-icon tf-icons ti ti-checkbox",
+      "slug": "app-email"
+    },
+    {
+      "url": "app-production-product-history-list",
+      "name": "Отгрузка",
+      "icon": "menu-icon tf-icons ti ti-id",
+      "slug": "app-email"
+    },
+    {
+      "url": "app-sklad-list",
+      "name": "Склад",
+      "icon": "menu-icon tf-icons ti ti-truck",
+      "slug": "app-email"
+    },
+    {
+      "url": "app-production-history-list",
+      "name": "Отчет о cырьё",
+      "icon": "menu-icon tf-icons ti ti-layout-grid",
+      "slug": "app-email"
+    },
+    {
+      "name": "Продукция",
+      "icon": "menu-icon tf-icons ti ti-shopping-cart",
+      "slug": "dashboard",
+      "submenu": [
+        {
+          "url": "app-product-list",
+          "name": "Продукт",
+          "slug": "dashboard-analytics"
+        },
+        {
+          "url": "app-color-list",
+          "name": "Цвет",
+          "slug": "dashboard-crm"
+        },
+        {
+          "url": "app-category-list",
+          "name": "Категория",
+          "slug": "dashboard-crm"
+        }
+      ]
+    }
+  ]
+}
